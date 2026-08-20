@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Testimonios — Danna Mesa Studio</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/admin.css">
+
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <!-- ================= VISTA 1: LOGIN ================= -->
+  <div class="admin-login-wrapper" id="adminLoginView">
+    <div class="admin-login-card">
+      <h1 class="admin-login-brand">Danna Mesa</h1>
+      <span class="admin-login-kicker">Gestor de Prueba Social · Admin</span>
+
+      <div class="admin-alert admin-alert-error" id="loginAlertError"></div>
+
+      <form id="loginForm">
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="loginEmail">Correo Electrónico</label>
+          <input type="email" id="loginEmail" class="admin-form-input" placeholder="tu-correo@gmail.com" required autocomplete="username">
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" class="admin-form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="admin-btn" id="loginSubmitBtn">
+          Iniciar Sesión Segura
+        </button>
+      </form>
+
+      <p style="margin-top: 24px; font-size: 11px; color: var(--admin-text-muted);">
+        🔒 Acceso restringido exclusivamente a administración.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= VISTA 2: DASHBOARD ================= -->
+  <div class="admin-dashboard" id="adminDashboardView">
+    <!-- Navbar -->
+    <header class="admin-navbar">
+      <div class="admin-brand-info">
+        <span class="admin-brand-title">Danna Mesa</span>
+        <span class="admin-brand-tag">Testimonios & Social Proof</span>
+      </div>
+
+      <div class="admin-user-nav">
+        <span class="admin-user-email" id="currentUserEmail">admin@dannamesa.com</span>
+        <a href="index.html#testimonios" target="_blank" class="admin-btn admin-btn-secondary admin-btn-sm" style="text-decoration: none;">
+          👁️ Ver en Catálogo
+        </a>
+        <button class="admin-btn admin-btn-danger admin-btn-sm" id="logoutBtn">
+          Cerrar Sesión
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="admin-container">
+      <!-- Header Actions -->
+      <div class="admin-header-actions">
+        <div>
+          <h2 class="admin-section-title">Experiencias & Capturas Reales</h2>
+          <p style="font-size: 13px; color: var(--admin-text-muted);">
+            Gestiona los mensajes de tus clientas para generar confianza antes de la reserva.
+          </p>
+        </div>
+
+        <div class="admin-btn-group">
+          <button class="admin-btn admin-btn-secondary" id="seedDefaultsBtn" title="Cargar las 7 conversaciones iniciales en la base de datos">
+            ⚡ Cargar 7 Testimonios Iniciales
+          </button>
+          <button class="admin-btn" id="openNewTestimonialModalBtn">
+            + Nuevo Testimonio
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Total Testimonios</span>
+          <span class="admin-stat-value" id="statTotalCount">0</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Publicados en Web</span>
+          <span class="admin-stat-value" style="color: var(--admin-success);" id="statPublishedCount">0</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Ocultos / Borrador</span>
+          <span class="admin-stat-value" style="color: var(--admin-text-muted);" id="statHiddenCount">0</span>
+        </div>
+      </div>
+
+      <!-- Lista de Testimonios -->
+      <div class="admin-testimonials-grid" id="adminTestimonialsGrid">
+        <!-- Renderizado dinámico desde Firestore -->
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= MODAL CREAR / EDITAR ================= -->
+  <div class="admin-modal-backdrop" id="testimonialModal">
+    <div class="admin-modal-content">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="modalTitle">Nuevo Testimonio</h3>
+        <button class="admin-modal-close" id="closeModalBtn">✕</button>
+      </div>
+
+      <form id="testimonialForm">
+        <input type="hidden" id="testimonialDocId">
+
+        <!-- Upload de Captura -->
+        <div class="admin-form-group">
+          <label class="admin-form-label">Captura de Conversación (WhatsApp / Chat)</label>
+          <div class="admin-dropzone" id="dropzoneBox">
+            <span id="dropzoneText">📸 Arrastra una captura aquí o haz clic para seleccionar</span>
+            <input type="file" id="screenshotFileInput" accept="image/*" style="display: none;">
+            <img id="screenshotPreviewImg" class="admin-dropzone-preview" alt="Preview">
+          </div>
+          <small style="font-size: 11px; color: var(--admin-text-muted); display: block; margin-top: 6px;">
+            * La imagen se optimiza automáticamente en alta fidelidad y peso ultra ligero.
+          </small>
+        </div>
+
+        <!-- Frase Destacada -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="formQuote">Frase Clave / Testimonio Destacado *</label>
+          <textarea id="formQuote" class="admin-form-textarea" rows="3" placeholder="Ej: Me encantaron, se ven súper naturales y me duraron más de un mes..." required></textarea>
+        </div>
+
+        <!-- Nombre / Alias y Privacidad -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="formClientName">Nombre o Alias de la Clienta *</label>
+          <input type="text" id="formClientName" class="admin-form-input" placeholder="Ej: Laura M." required>
+          <div class="admin-chips-row">
+            <span style="font-size: 11px; color: var(--admin-text-muted); align-self: center;">Privacidad rápida:</span>
+            <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Verificada'">Clienta Verificada</button>
+            <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Frecuente'">Clienta Frecuente</button>
+            <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Studio'">Clienta Studio</button>
+          </div>
+        </div>
+
+        <!-- Servicio -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="formService">Servicio Recibido</label>
+          <select id="formService" class="admin-form-select">
+            <option value="Extensiones de Pestañas">Extensiones de Pestañas</option>
+            <option value="Lifting Coreano">Lifting Coreano</option>
+            <option value="Combo Mirada Perfecta">Combo Mirada Perfecta (Pestañas + Cejas)</option>
+            <option value="Diseño & Henna">Cejas en Henna</option>
+            <option value="Laminado de Cejas">Laminado de Cejas</option>
+            <option value="HydraLips">HydraLips</option>
+            <option value="Volumen Ruso / Exclusivo">Volumen Exclusivo</option>
+            <option value="Retoque & Aplicación">Retoque & Mantenimiento</option>
+          </select>
+        </div>
+
+        <!-- Tag / Fecha -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="formDate">Etiqueta / Fecha Opcional</label>
+          <input type="text" id="formDate" class="admin-form-input" placeholder="Ej: Colección 2026, Retención & Calidad, etc.">
+        </div>
+
+        <!-- Prioridad de Orden -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="formPriority">Prioridad en Catálogo (1 = Primero)</label>
+          <input type="number" id="formPriority" class="admin-form-input" min="1" max="99" value="1">
+        </div>
+
+        <!-- Estado de Publicación -->
+        <div class="admin-form-group">
+          <label class="admin-toggle-wrapper">
+            <input type="checkbox" id="formPublished" class="admin-toggle-checkbox" checked>
+            <span style="font-size: 13px; font-weight: 600;">Publicar inmediatamente en el catálogo web</span>
+          </label>
+        </div>
+
+        <!-- Botones de Guardar -->
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="button" class="admin-btn admin-btn-secondary" id="cancelModalBtn">Cancelar</button>
+          <button type="submit" class="admin-btn" id="saveTestimonialBtn">Guardar Testimonio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script del Administrador -->
+  <script src="js/admin-testimonials.js"></script>
+</body>
+</html>

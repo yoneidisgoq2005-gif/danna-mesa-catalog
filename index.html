@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/luxury-theme.css">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/lookbook.css">
+  <link rel="stylesheet" href="css/testimonials.css">
 </head>
 <body>
 
@@ -141,6 +142,40 @@
         </p>
       </section>
 
+      <!-- ================= TESTIMONIOS: LO DICEN ELLAS ================= -->
+      <section class="testimonials-section" id="testimonios">
+        <div class="testimonials-header">
+          <span class="testimonials-kicker">Experiencias Reales</span>
+          <h2 class="testimonials-title">Lo Dicen Ellas</h2>
+          <p class="testimonials-subtitle">
+            Mensajes espontáneos que recibimos después de cada cita. La verdadera prueba de nuestro compromiso con tu mirada.
+          </p>
+        </div>
+
+        <!-- Grilla de Testimonios Dinámicos -->
+        <div class="testimonials-grid" id="testimonialsGrid">
+          <!-- Inyectado por js/testimonials.js -->
+        </div>
+
+        <!-- Carga Progresiva -->
+        <div class="testimonials-actions">
+          <button class="btn-testimonials-more" id="loadMoreTestimonials" style="display: none;">
+            Ver más experiencias ↓
+          </button>
+        </div>
+
+        <!-- CTA Post-Testimonios -->
+        <div class="testimonials-cta-box">
+          <h3 class="testimonials-cta-title">Ahora imagina tu resultado.</h3>
+          <p class="testimonials-cta-subtitle">
+            Permítenos diseñar una mirada natural, elegante y exclusiva para ti.
+          </p>
+          <a href="https://wa.me/573006279079?text=Hola%20Danna,%20vi%20los%20testimonios%20en%20tu%20catálogo%20y%20me%20encantaría%20agendar%20mi%20cita" target="_blank" class="testimonials-cta-btn">
+            <span>💬</span> Agenda tu cita en WhatsApp
+          </a>
+        </div>
+      </section>
+
       <!-- FOOTER -->
       <footer class="site-footer">
         <div class="footer-brand" id="footerBrandName">Danna Mesa Studio</div>
@@ -234,10 +269,24 @@
     </div>
   </div>
 
+  <!-- ================= TESTIMONIAL LIGHTBOX MODAL ================= -->
+  <div class="testimonial-lightbox-modal" id="testimonialLightboxModal">
+    <div class="testimonial-lightbox-content">
+      <button class="testimonial-lightbox-close" id="testimonialLightboxClose" title="Cerrar">✕</button>
+      <img id="testimonialLightboxImg" src="" alt="Conversación real de clienta" class="testimonial-lightbox-img">
+      <div class="testimonial-lightbox-caption" id="testimonialLightboxCaption"></div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <!-- Scripts -->
   <script src="js/data.js"></script>
   <script src="js/lookbook.js"></script>
   <script src="js/customizer.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/testimonials.js"></script>
 </body>
 </html>

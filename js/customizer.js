@@ -50,6 +50,7 @@ class CatalogCustomizer {
           <button class="subfilter-chip" data-custab="prices" id="cusTabPrices">💰 Tabla de Precios</button>
           <button class="subfilter-chip" data-custab="theme" id="cusTabTheme">🎨 Colores & Tema</button>
           <button class="subfilter-chip" data-custab="backup" id="cusTabBackup">💾 Respaldo JSON</button>
+          <a href="admin.html" target="_blank" class="subfilter-chip" style="text-decoration: none; color: var(--color-primary); font-weight: 700;">💬 Testimonios (Firebase) ➔</a>
         </div>
 
         <div class="drawer-body" id="customizerBodyContainer" style="padding: 24px; overflow-y: auto;">
