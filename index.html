@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danna Mesa Studio — Catálogo & Experiencias · Colección 2026</title>
+  
+  <!-- SEO & Social Meta -->
+  <meta name="description" content="Catálogo interactivo y exclusivo de Danna Mesa Studio. Lifting Coreano, Extensiones de Pestañas, Cejas en Henna, Laminado y HydraLips en Armenia, Quindío.">
+  <meta name="theme-color" content="#9c7e54">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400;1,9..144,500&family=Pinyon+Script&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/luxury-theme.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/lookbook.css">
+</head>
+<body>
+
+  <!-- ================= TOP HEADER & NAVIGATION ================= -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#inicio" class="brand-wrapper">
+        <span class="brand-title" id="headerBrandName">Danna Mesa</span>
+        <span class="brand-subtitle" id="headerBrandSubtitle">Studio Experience</span>
+      </a>
+
+      <div class="header-actions">
+        <!-- Selector de Vista: App vs Revista -->
+        <div class="view-mode-toggle">
+          <button class="toggle-btn active" id="btnViewApp" title="Vista Interactiva Rápida">
+            📱 Catálogo
+          </button>
+          <button class="toggle-btn" id="btnViewLookbook" title="Vista Revista Editorial / Imprimir PDF">
+            📖 Revista
+          </button>
+        </div>
+
+        <!-- Botón de Personalización / Admin (Oculto para clientes, accesible con ?admin=true o Alt+E) -->
+        <button class="icon-btn" id="openCustomizerBtn" title="Personalizar Precios, Colores y Contacto (Admin)" style="display: none;">
+          ⚙️
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN APP VIEW (INTERACTIVE) ================= -->
+  <main class="app-view" id="appViewContainer">
+    <div class="app-container">
+
+      <!-- HERO EDITORIAL SECTION -->
+      <section class="hero-section" id="inicio">
+        <div class="hero-media" id="heroMediaBox" style="background-image: url('assets/img/page_img_1.jpeg'); background-position: center 20%;">
+          <div class="hero-scrim"></div>
+          <div class="hero-content">
+            <div class="hero-badge" id="heroBadgeText">Colección 2026 · Studio Experience</div>
+            <h1 class="hero-title" id="heroStudioTitle">Danna Mesa</h1>
+            <p class="hero-lead" id="heroWelcomeLead">
+              "Hay un detalle que me obsesiona: que nadie pueda saber dónde termina tu pestaña y dónde empieza mi trabajo, que se vean tuyas, naturales y diseñadas para ti."
+            </p>
+            <div class="hero-actions">
+              <a href="#servicios" class="btn btn-primary">Ver Servicios & Precios</a>
+              <a href="#experiencias" class="btn btn-outline">Experiencias & Combos ⭐</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STICKY CATEGORY NAVIGATION & SEARCH -->
+      <section id="servicios">
+        <div class="sticky-filter-bar">
+          <div class="category-nav-wrapper">
+            <button class="cat-nav-arrow prev" id="catNavPrevBtn" title="Desplazar categorías a la izquierda">‹</button>
+            <div class="category-nav-scroll" id="categoryNavScroll">
+              <!-- Pestañas de categorías inyectadas por JS -->
+            </div>
+            <button class="cat-nav-arrow next" id="catNavNextBtn" title="Desplazar categorías a la derecha">›</button>
+          </div>
+
+          <!-- Barra deslizadora interactiva para navegar por las pestañas -->
+          <div class="cat-slider-track-wrap">
+            <input type="range" class="cat-nav-slider" id="catNavSlider" min="0" max="100" value="0" title="Desliza para moverte por las categorías">
+          </div>
+
+          <div class="subfilter-bar" id="subfilterBar" style="display: none;">
+            <!-- Subfiltros de pestañas inyectados por JS -->
+          </div>
+        </div>
+
+        <!-- Buscador en Vivo -->
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="catalogSearchInput" placeholder="Buscar por servicio (ej: Wispy, Henna, Lifting, HydraLips, Retoque)...">
+        </div>
+
+        <!-- GRILLA DE SERVICIOS -->
+        <div class="services-grid" id="servicesCardsGrid">
+          <!-- Tarjetas renderizadas dinámicamente por app.js -->
+        </div>
+      </section>
+
+      <!-- HIGHLIGHT EXPERIENCE / COMBO BANNER -->
+      <section class="combo-highlight-card" id="experiencias">
+        <div>
+          <span class="combo-badge-pill" id="comboBadgePill">⭐ Beneficio Exclusivo</span>
+          <h2 class="combo-highlight-title" id="comboHighlightTitle">Experiencias & Rituales</h2>
+          <p style="font-size: 14px; line-height: 1.6; color: #ded7ca;" id="comboHighlightDesc">
+            Combina tus servicios favoritos en una misma cita y el cotizador inteligente aplicará tu descuento automáticamente.
+          </p>
+          <div class="combo-formula-box" id="comboFormulaBox">
+            <strong>Mirada Perfecta:</strong> Extensiones + Cejas en Henna = <em>Ahorra $10.000 COP</em><br>
+            <strong>Esencia Sublime:</strong> Extensiones + Laminado = <em>¡Hidratante de regalo ($15.000)!</em><br>
+            <strong>Ritual Glow:</strong> Lifting + Laminado = <em>$100.000 (Ahorras $15.000)</em>
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <img id="comboBannerImg" src="assets/img/completo2.png" alt="Experiencias Danna Mesa" style="width: 100%; height: 320px; object-fit: cover; object-position: center 30%; border-radius: var(--radius-md); box-shadow: var(--shadow-md);">
+        </div>
+      </section>
+
+      <!-- POLÍTICAS DE RETOQUE -->
+      <section class="policies-box" id="policiesSectionBox">
+        <div class="section-kick" id="policySectionKick">Condiciones del Servicio</div>
+        <h2 class="policies-title" id="policiesTitleText">Políticas de Retoque de Extensiones</h2>
+        <p style="font-size: 13.5px; color: var(--color-ink-light); margin-bottom: 16px; font-style: italic;" id="policiesSubtitleText">
+          Para conservar la armonía y calidad de tus pestañas, los retoques se realizan únicamente hasta los 21 días posteriores a la aplicación.
+        </p>
+        <ul class="policies-list" id="policiesListItems">
+          <li>Conservar mínimo el 50% de las extensiones aplicadas.</li>
+          <li>Asistir sin maquillaje en las extensiones (pestañina, delineador o residuos).</li>
+          <li>No haber cortado, quemado, retirado o manipulado las extensiones en casa.</li>
+          <li>Llegar con las pestañas limpias y libres de aceites o cremas en la zona de los ojos.</li>
+          <li>Estar dentro del rango de días permitido (21 días máximo).</li>
+        </ul>
+        <p style="font-size: 12px; color: var(--color-muted); border-top: 1px solid var(--color-hairline); padding-top: 12px;" id="policiesNoteText">
+          * Si cualquiera de estas condiciones se incumple, el servicio se considerará una aplicación nueva.
+        </p>
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="site-footer">
+        <div class="footer-brand" id="footerBrandName">Danna Mesa Studio</div>
+        <div style="font-size: 12px; margin-bottom: 12px;" id="footerLocationText">Armenia · Quindío, Colombia · Colección 2026</div>
+        
+        <div class="social-links">
+          <a href="https://wa.me/573006279079" target="_blank" class="social-link-btn" id="footerWhatsappLink">💬 WhatsApp</a>
+          <a href="https://instagram.com/dannamesa_studio" target="_blank" class="social-link-btn" id="footerInstagramLink">📸 Instagram</a>
+          <a href="https://tiktok.com/@dannamesa_studio" target="_blank" class="social-link-btn" id="footerTiktokLink">🎵 TikTok</a>
+        </div>
+
+        <p style="font-size: 11px; color: var(--color-muted); margin-top: 20px;">
+          "Tu mirada, nuestro sello" · Diseñado para una experiencia de belleza de lujo.
+        </p>
+      </footer>
+
+    </div>
+  </main>
+
+  <!-- ================= LOOKBOOK VIEW (REVISTA EDITORIAL) ================= -->
+  <div class="lookbook-view" id="lookbookViewContainer">
+    <!-- Toolbar de revista -->
+    <div class="lookbook-toolbar">
+      <span class="lookbook-page-indicator">Colección Editorial 2026</span>
+      <button class="lookbook-btn" onclick="window.print()" title="Descargar / Imprimir en PDF">🖨️</button>
+      <button class="lookbook-btn" onclick="catalogApp.switchView('app')" title="Volver al Catálogo Interactivo">✕</button>
+    </div>
+
+    <!-- Escenario de páginas de la revista -->
+    <div class="book-stage" id="lookbookStageContainer">
+      <!-- Páginas inyectadas por lookbook.js -->
+    </div>
+  </div>
+
+  <!-- ================= FLOATING CART & BOOKING BAR ================= -->
+  <aside class="floating-booking-bar" id="floatingBookingBar">
+    <div class="cart-summary-text">
+      <span class="cart-items-count" id="floatingCartCount">0 servicios</span>
+      <span class="cart-total-price" id="floatingCartTotal">$ 0</span>
+      <span class="cart-combo-discount-badge" id="floatingComboDiscount" style="display: none;"></span>
+    </div>
+
+    <button class="btn btn-primary" id="openCartDrawerBtn" style="padding: 10px 20px;">
+      Ver Cita & Agendar ➔
+    </button>
+  </aside>
+
+  <!-- ================= BOOKING DRAWER MODAL ================= -->
+  <div class="modal-overlay" id="bookingDrawerModal">
+    <div class="drawer-modal-content">
+      <div class="drawer-header">
+        <div>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--color-primary);">Resumen de tu Cita</span>
+          <h2 class="drawer-title">Servicios Seleccionados</h2>
+        </div>
+        <button class="btn-remove-item" id="closeCartDrawerBtn" style="font-size: 20px;">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Descuentos de combo aplicados -->
+        <div class="discount-alert-card" id="drawerDiscountAlert" style="display: none;"></div>
+
+        <!-- Lista de servicios -->
+        <div class="drawer-items-list" id="drawerItemsList"></div>
+
+        <!-- Vista previa de WhatsApp -->
+        <div style="margin-top: 20px;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; color: var(--color-muted);">Mensaje que se enviará por WhatsApp:</span>
+          <div class="whatsapp-preview-box" id="whatsappMessagePreview"></div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <div class="drawer-total-row" style="margin-bottom: 4px; font-size: 12px; color: var(--color-muted);">
+          <span>Subtotal individual</span>
+          <span id="drawerSubtotalAmount">$ 0</span>
+        </div>
+        <div class="drawer-total-row" style="margin-bottom: 8px; font-size: 12px; color: #166534; font-weight: 600;">
+          <span>Descuento por Experiencia</span>
+          <span id="drawerDiscountAmount">$ 0</span>
+        </div>
+        <div class="drawer-total-row">
+          <span class="total-label">Total Estimado</span>
+          <span class="total-amount" id="drawerFinalTotalAmount">$ 0</span>
+        </div>
+
+        <button class="btn-whatsapp-submit" id="sendWhatsAppBookingBtn">
+          <span>💬</span> Reservar Cita en WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/lookbook.js"></script>
+  <script src="js/customizer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

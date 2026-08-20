@@ -1,0 +1,146 @@
+/* ==========================================================================
+   DANNA MESA STUDIO — LUXURY THEME DESIGN TOKENS
+   Aesthetic: High-End Editorial Beauty Studio (Lookbook & Modern Web App)
+   ========================================================================== */
+
+:root {
+  /* Color Palette */
+  --color-primary: #9c7e54;       /* Bronce Oro cálido */
+  --color-primary-dark: #7a5e38;
+  --color-primary-light: #c8b18d;
+  --color-primary-glaze: rgba(156, 126, 84, 0.12);
+  
+  --color-paper: #f4f1ea;         /* Fondo editorial cálido */
+  --color-paper-light: #faf8f5;   /* Superficie clara */
+  --color-paper-card: #ffffff;
+  --color-paper-alt: #ece5d8;
+  
+  --color-ink: #1b1a16;           /* Texto carbón profundo */
+  --color-ink-light: #3d3931;     /* Texto secundario */
+  --color-muted: #8c8578;         /* Subtítulos y bordes sutiles */
+  --color-hairline: #e2dbce;      /* Líneas divisorias finas */
+  --color-hairline-dark: #514c43;
+  
+  --color-dark-bg: #14120e;       /* Modo oscuro / Secciones de impacto */
+  --color-dark-surface: #1e1b16;
+  --color-dark-card: #25221c;
+  --color-dark-text: #efe8da;
+  
+  --color-success: #3c7d58;
+  --color-discount: #b33939;
+
+  /* Typography */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-script: 'Pinyon Script', cursive;
+
+  /* Elevations & Shadows */
+  --shadow-sm: 0 2px 8px rgba(27, 26, 22, 0.04);
+  --shadow-md: 0 8px 24px -4px rgba(27, 26, 22, 0.08);
+  --shadow-lg: 0 20px 40px -8px rgba(27, 26, 22, 0.12);
+  --shadow-float: 0 16px 36px -6px rgba(156, 126, 84, 0.35);
+  --shadow-editorial: 0 40px 82px -30px rgba(0, 0, 0, 0.5), 0 14px 30px -16px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.4s var(--ease-editorial);
+  --transition-slow: 0.8s var(--ease-editorial);
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-full: 9999px;
+}
+
+/* Palette Themes (Configurables vía Customizer) */
+[data-theme="rose-gold"] {
+  --color-primary: #b76e79;
+  --color-primary-dark: #944b56;
+  --color-primary-light: #dfa6af;
+  --color-primary-glaze: rgba(183, 110, 121, 0.12);
+}
+
+[data-theme="nude-minimal"] {
+  --color-primary: #85705e;
+  --color-primary-dark: #635040;
+  --color-primary-light: #ad9b8c;
+  --color-primary-glaze: rgba(133, 112, 94, 0.12);
+}
+
+[data-theme="dark-luxury"] {
+  --color-paper: #181613;
+  --color-paper-light: #201d18;
+  --color-paper-card: #25221c;
+  --color-paper-alt: #12100d;
+  --color-ink: #f4f1ea;
+  --color-ink-light: #cfc8bd;
+  --color-hairline: #38342c;
+  --color-muted: #9e978c;
+}
+
+/* Global Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  min-height: 100%;
+}
+
+/* Typography Helpers */
+.font-serif { font-family: var(--font-serif); }
+.font-sans { font-family: var(--font-sans); }
+.font-script { font-family: var(--font-script); }
+
+h1, h2, h3, h4, .serif-heading {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.text-bronze { color: var(--color-primary); }
+.text-muted { color: var(--color-muted); }
+.text-italic { font-style: italic; }
+.tracking-wide { letter-spacing: 0.24em; }
+.tracking-ultra { letter-spacing: 0.4em; }
+.uppercase { text-transform: uppercase; }
+
+/* Elegant custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-paper);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-light);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
