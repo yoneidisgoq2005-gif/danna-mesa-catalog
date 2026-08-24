@@ -10,13 +10,13 @@
 
   // Configuración de Firebase
   const firebaseConfig = {
-    apiKey: "AIzaSyAtDg0SFiYVI23-Ony28IKZhy9xDvaI8no",
+    apiKey: "AIzaSyAtDg0SFIyVI23-Ony28IKZhy9xDvaI8no",
     authDomain: "danna-mesa-studio.firebaseapp.com",
     projectId: "danna-mesa-studio",
     storageBucket: "danna-mesa-studio.firebasestorage.app",
-    messagingSenderId: "789114044871",
-    appId: "1:789114044871:web:3cbe82d9cd2922Bff039e2",
-    measurementId: "G-H17T6V6HX"
+    messagingSenderId: "709114044871",
+    appId: "1:709114044871:web:f7eea39cb714a20bf039e2",
+    measurementId: "G-2M73B5VMMT"
   };
 
   // Testimonios iniciales reales integrados directamente (fallback inmediato y offline)

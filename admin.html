@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Testimonios — Danna Mesa Studio</title>
+  <title>Panel de Administración Total — Danna Mesa Studio</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&display=swap" rel="stylesheet">
   
   <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/luxury-theme.css">
   <link rel="stylesheet" href="css/admin.css">
 
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Catálogo Base Data State -->
+  <script src="js/data.js"></script>
 </head>
 <body>
 
@@ -24,7 +28,7 @@
   <div class="admin-login-wrapper" id="adminLoginView">
     <div class="admin-login-card">
       <h1 class="admin-login-brand">Danna Mesa</h1>
-      <span class="admin-login-kicker">Gestor de Prueba Social · Admin</span>
+      <span class="admin-login-kicker">Centro de Control en la Nube · Admin</span>
 
       <div class="admin-alert admin-alert-error" id="loginAlertError"></div>
 
@@ -45,24 +49,24 @@
       </form>
 
       <p style="margin-top: 24px; font-size: 11px; color: var(--admin-text-muted);">
-        🔒 Acceso restringido exclusivamente a administración.
+        🔒 Acceso protegido con Firebase Authentication.
       </p>
     </div>
   </div>
 
-  <!-- ================= VISTA 2: DASHBOARD ================= -->
+  <!-- ================= VISTA 2: DASHBOARD UNIFICADO ================= -->
   <div class="admin-dashboard" id="adminDashboardView">
-    <!-- Navbar -->
+    <!-- Navbar Superior -->
     <header class="admin-navbar">
       <div class="admin-brand-info">
         <span class="admin-brand-title">Danna Mesa</span>
-        <span class="admin-brand-tag">Testimonios & Social Proof</span>
+        <span class="admin-brand-tag">Gestión Cloud en Vivo</span>
       </div>
 
       <div class="admin-user-nav">
         <span class="admin-user-email" id="currentUserEmail">admin@dannamesa.com</span>
-        <a href="index.html#testimonios" target="_blank" class="admin-btn admin-btn-secondary admin-btn-sm" style="text-decoration: none;">
-          👁️ Ver en Catálogo
+        <a href="index.html" target="_blank" class="admin-btn admin-btn-secondary admin-btn-sm" style="text-decoration: none;">
+          👁️ Ver Catálogo Web
         </a>
         <button class="admin-btn admin-btn-danger admin-btn-sm" id="logoutBtn">
           Cerrar Sesión
@@ -70,93 +74,350 @@
       </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Barra de Pestañas de Navegación -->
+    <nav class="admin-nav-tabs-bar">
+      <div class="admin-tabs-scroll">
+        <button class="admin-tab-btn active" data-tab="testimonials" id="tabTestimonialsBtn">
+          💬 Testimonios & Social Proof
+        </button>
+        <button class="admin-tab-btn" data-tab="all_photos" id="tabAllPhotosBtn">
+          🖼️ Gestor Maestro de Fotos
+        </button>
+        <button class="admin-tab-btn" data-tab="services" id="tabServicesBtn">
+          ✨ Servicios & Nuevos Efectos
+        </button>
+        <button class="admin-tab-btn" data-tab="hero_banners" id="tabHeroBannersBtn">
+          🌟 Portada & Banners
+        </button>
+        <button class="admin-tab-btn" data-tab="policies" id="tabPoliciesBtn">
+          📜 Políticas de Retoque
+        </button>
+        <button class="admin-tab-btn" data-tab="studio" id="tabStudioBtn">
+          🏢 Estudio & Redes
+        </button>
+        <button class="admin-tab-btn" data-tab="cloud_sync" id="tabCloudSyncBtn">
+          ☁️ Sincronización Cloud
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Container Dinámico -->
     <main class="admin-container">
-      <!-- Header Actions -->
-      <div class="admin-header-actions">
-        <div>
-          <h2 class="admin-section-title">Experiencias & Capturas Reales</h2>
-          <p style="font-size: 13px; color: var(--admin-text-muted);">
-            Gestiona los mensajes de tus clientas para generar confianza antes de la reserva.
-          </p>
+
+      <!-- ================= TAB 1: TESTIMONIOS ================= -->
+      <section class="admin-tab-content active" id="tabContentTestimonials">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Experiencias & Capturas de Clientas</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Gestiona los mensajes reales de WhatsApp para generar confianza antes de reservar.
+            </p>
+          </div>
+
+          <div class="admin-btn-group">
+            <button class="admin-btn admin-btn-secondary" id="seedDefaultsBtn">
+              ⚡ Cargar 7 Testimonios Iniciales
+            </button>
+            <button class="admin-btn" id="openNewTestimonialModalBtn">
+              + Nuevo Testimonio
+            </button>
+          </div>
         </div>
 
-        <div class="admin-btn-group">
-          <button class="admin-btn admin-btn-secondary" id="seedDefaultsBtn" title="Cargar las 7 conversaciones iniciales en la base de datos">
-            ⚡ Cargar 7 Testimonios Iniciales
+        <!-- Stats Overview -->
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Total Testimonios</span>
+            <span class="admin-stat-value" id="statTotalCount">0</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Publicados en Web</span>
+            <span class="admin-stat-value" style="color: var(--admin-success);" id="statPublishedCount">0</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Ocultos / Borrador</span>
+            <span class="admin-stat-value" style="color: var(--admin-text-muted);" id="statHiddenCount">0</span>
+          </div>
+        </div>
+
+        <!-- Lista de Testimonios -->
+        <div class="admin-testimonials-grid" id="adminTestimonialsGrid">
+          <!-- Inyectado por JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: GESTOR MAESTRO DE FOTOS ================= -->
+      <section class="admin-tab-content" id="tabContentAllPhotos">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Gestor Maestro de Todas las Fotos</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Cambia cualquier foto de la web y ajusta su encuadre horizontal/vertical (X/Y) con guardado en tiempo real en Firestore.
+            </p>
+          </div>
+
+          <div class="admin-btn-group">
+            <button class="admin-btn" id="btnSaveAllPhotosPositions">
+              💾 Guardar Encuadres en la Nube
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros de categoría de fotos -->
+        <div class="admin-chips-row" id="photoCategoryFilters" style="margin-bottom: 20px;">
+          <button class="admin-chip-btn active" data-cat="all">Todas las Fotos</button>
+          <button class="admin-chip-btn" data-cat="portada">Portada & Banners</button>
+          <button class="admin-chip-btn" data-cat="lifting">Lifting</button>
+          <button class="admin-chip-btn" data-cat="extensiones">Extensiones</button>
+          <button class="admin-chip-btn" data-cat="cejas">Cejas</button>
+          <button class="admin-chip-btn" data-cat="hydralips">HydraLips</button>
+          <button class="admin-chip-btn" data-cat="experiencias">Combos</button>
+          <button class="admin-chip-btn" data-cat="cuidados">Cuidados</button>
+        </div>
+
+        <!-- Grid de Fotos del Sitio -->
+        <div class="admin-photos-grid" id="adminMasterPhotosGrid">
+          <!-- Inyectado dinámicamente por JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: SERVICIOS & NUEVOS EFECTOS ================= -->
+      <section class="admin-tab-content" id="tabContentServices">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Servicios, Efectos & Precios</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Modifica precios existentes o crea nuevos efectos de pestañas y cejas con foto, descripción y badges.
+            </p>
+          </div>
+
+          <div class="admin-btn-group">
+            <button class="admin-btn" id="openNewServiceModalBtn">
+              + Nuevo Efecto / Servicio
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid de Servicios -->
+        <div class="admin-services-list-grid" id="adminServicesListGrid">
+          <!-- Inyectado por JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: PORTADA & BANNERS ================= -->
+      <section class="admin-tab-content" id="tabContentHeroBanners">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Portada & Banners Destacados</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Ajusta la frase de bienvenida, el banner de combos y sus fórmulas de descuento.
+            </p>
+          </div>
+        </div>
+
+        <form id="heroBannerForm" class="admin-card-section">
+          <h3 class="admin-card-subtitle">🌟 Portada Principal (Hero)</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Badge Superior</label>
+            <input type="text" id="heroFormBadge" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título del Estudio</label>
+            <input type="text" id="heroFormTitle" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Frase de Bienvenida / Manifiesto Editorial</label>
+            <textarea id="heroFormWelcomeLead" class="admin-form-textarea" rows="3"></textarea>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--admin-border); margin: 28px 0;">
+
+          <h3 class="admin-card-subtitle">⭐ Banner de Experiencias & Combos</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título del Banner</label>
+            <input type="text" id="comboFormTitle" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Descripción</label>
+            <textarea id="comboFormDesc" class="admin-form-textarea" rows="2"></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Fórmula 1 (Mirada Perfecta)</label>
+            <input type="text" id="comboFormFormula1" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Fórmula 2 (Esencia Sublime)</label>
+            <input type="text" id="comboFormFormula2" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Fórmula 3 (Ritual Glow)</label>
+            <input type="text" id="comboFormFormula3" class="admin-form-input">
+          </div>
+
+          <button type="submit" class="admin-btn" style="margin-top: 16px;">
+            Guardar Cambios de Portada & Banners en la Nube
           </button>
-          <button class="admin-btn" id="openNewTestimonialModalBtn">
-            + Nuevo Testimonio
+        </form>
+      </section>
+
+      <!-- ================= TAB 5: POLÍTICAS ================= -->
+      <section class="admin-tab-content" id="tabContentPolicies">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Políticas de Retoque de Extensiones</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Personaliza las condiciones para mantener la calidad y el estándar de higiene del estudio.
+            </p>
+          </div>
+        </div>
+
+        <form id="policiesForm" class="admin-card-section">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título de la Sección</label>
+            <input type="text" id="policiesFormTitle" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Subtítulo / Introducción</label>
+            <textarea id="policiesFormSubtitle" class="admin-form-textarea" rows="2"></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Condiciones (Una por línea)</label>
+            <textarea id="policiesFormConditions" class="admin-form-textarea" rows="6"></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Nota Legal al Pie</label>
+            <textarea id="policiesFormNote" class="admin-form-textarea" rows="3"></textarea>
+          </div>
+
+          <button type="submit" class="admin-btn" style="margin-top: 16px;">
+            Guardar Políticas en Firestore
           </button>
-        </div>
-      </div>
+        </form>
+      </section>
 
-      <!-- Stats Overview -->
-      <div class="admin-stats-grid">
-        <div class="admin-stat-card">
-          <span class="admin-stat-label">Total Testimonios</span>
-          <span class="admin-stat-value" id="statTotalCount">0</span>
+      <!-- ================= TAB 6: ESTUDIO & REDES ================= -->
+      <section class="admin-tab-content" id="tabContentStudio">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Estudio, Ubicación & Redes</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Información de contacto oficial de WhatsApp, Instagram y TikTok.
+            </p>
+          </div>
         </div>
-        <div class="admin-stat-card">
-          <span class="admin-stat-label">Publicados en Web</span>
-          <span class="admin-stat-value" style="color: var(--admin-success);" id="statPublishedCount">0</span>
-        </div>
-        <div class="admin-stat-card">
-          <span class="admin-stat-label">Ocultos / Borrador</span>
-          <span class="admin-stat-value" style="color: var(--admin-text-muted);" id="statHiddenCount">0</span>
-        </div>
-      </div>
 
-      <!-- Lista de Testimonios -->
-      <div class="admin-testimonials-grid" id="adminTestimonialsGrid">
-        <!-- Renderizado dinámico desde Firestore -->
-      </div>
+        <form id="studioForm" class="admin-card-section">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Nombre del Estudio</label>
+            <input type="text" id="studioFormName" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Ubicación</label>
+            <input type="text" id="studioFormLocation" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Número de WhatsApp (con código de país, ej: 573006279079)</label>
+            <input type="text" id="studioFormWhatsapp" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Instagram (@usuario)</label>
+            <input type="text" id="studioFormInstagram" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">TikTok (@usuario)</label>
+            <input type="text" id="studioFormTiktok" class="admin-form-input">
+          </div>
+
+          <button type="submit" class="admin-btn" style="margin-top: 16px;">
+            Guardar Información de Contacto en Firestore
+          </button>
+        </form>
+      </section>
+
+      <!-- ================= TAB 7: SINCRONIZACIÓN CLOUD ================= -->
+      <section class="admin-tab-content" id="tabContentCloudSync">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Sincronización & Base de Datos Cloud</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Herramientas de respaldo, migración masiva y restauración de fábrica.
+            </p>
+          </div>
+        </div>
+
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Estado de la Base de Datos</span>
+            <span class="admin-stat-value" style="color: var(--admin-success); font-size: 20px;">Firebase Firestore Activo</span>
+            <p style="font-size: 12px; color: var(--admin-text-muted); margin-top: 8px;">
+              Los cambios se propagan a todos los clientes del mundo en tiempo real.
+            </p>
+          </div>
+        </div>
+
+        <div class="admin-card-section" style="margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <h3 style="font-size: 16px; margin-bottom: 6px;">⚡ Migrar Catálogo Completo a Firestore</h3>
+            <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 12px;">
+              Sube todas las fotos, servicios, precios y textos originales a la base de datos de la nube con un solo clic.
+            </p>
+            <button class="admin-btn" id="btnPushAllToCloud" style="width: auto;">
+              🚀 Subir Catálogo Completo a la Nube
+            </button>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--admin-border); margin: 8px 0;">
+
+          <div>
+            <h3 style="font-size: 16px; margin-bottom: 6px; color: var(--admin-danger);">⚠️ Restablecer Valores Originales</h3>
+            <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 12px;">
+              Restaura la colección 2026 oficial por defecto de Danna Mesa.
+            </p>
+            <button class="admin-btn admin-btn-danger admin-btn-sm" id="btnResetAllToDefaults">
+              Restablecer Valores de Fábrica
+            </button>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
-  <!-- ================= MODAL CREAR / EDITAR ================= -->
+  <!-- ================= MODAL TESTIMONIO ================= -->
   <div class="admin-modal-backdrop" id="testimonialModal">
     <div class="admin-modal-content">
       <div class="admin-modal-header">
-        <h3 class="admin-modal-title" id="modalTitle">Nuevo Testimonio</h3>
+        <h3 class="admin-modal-title" id="modalTitle">Nuevo Testimonio Real</h3>
         <button class="admin-modal-close" id="closeModalBtn">✕</button>
       </div>
 
       <form id="testimonialForm">
         <input type="hidden" id="testimonialDocId">
 
-        <!-- Upload de Captura -->
         <div class="admin-form-group">
-          <label class="admin-form-label">Captura de Conversación (WhatsApp / Chat)</label>
+          <label class="admin-form-label">Captura de WhatsApp / Chat</label>
           <div class="admin-dropzone" id="dropzoneBox">
-            <span id="dropzoneText">📸 Arrastra una captura aquí o haz clic para seleccionar</span>
+            <span id="dropzoneText">📸 Arrastra una captura aquí o haz clic para seleccionarla</span>
             <input type="file" id="screenshotFileInput" accept="image/*" style="display: none;">
             <img id="screenshotPreviewImg" class="admin-dropzone-preview" alt="Preview">
           </div>
-          <small style="font-size: 11px; color: var(--admin-text-muted); display: block; margin-top: 6px;">
-            * La imagen se optimiza automáticamente en alta fidelidad y peso ultra ligero.
-          </small>
         </div>
 
-        <!-- Frase Destacada -->
         <div class="admin-form-group">
-          <label class="admin-form-label" for="formQuote">Frase Clave / Testimonio Destacado *</label>
+          <label class="admin-form-label" for="formQuote">Frase Clave / Cita Potente *</label>
           <textarea id="formQuote" class="admin-form-textarea" rows="3" placeholder="Ej: Me encantaron, se ven súper naturales y me duraron más de un mes..." required></textarea>
         </div>
 
-        <!-- Nombre / Alias y Privacidad -->
         <div class="admin-form-group">
           <label class="admin-form-label" for="formClientName">Nombre o Alias de la Clienta *</label>
           <input type="text" id="formClientName" class="admin-form-input" placeholder="Ej: Laura M." required>
           <div class="admin-chips-row">
-            <span style="font-size: 11px; color: var(--admin-text-muted); align-self: center;">Privacidad rápida:</span>
             <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Verificada'">Clienta Verificada</button>
             <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Frecuente'">Clienta Frecuente</button>
             <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Studio'">Clienta Studio</button>
           </div>
         </div>
 
-        <!-- Servicio -->
         <div class="admin-form-group">
           <label class="admin-form-label" for="formService">Servicio Recibido</label>
           <select id="formService" class="admin-form-select">
@@ -166,32 +427,28 @@
             <option value="Diseño & Henna">Cejas en Henna</option>
             <option value="Laminado de Cejas">Laminado de Cejas</option>
             <option value="HydraLips">HydraLips</option>
-            <option value="Volumen Ruso / Exclusivo">Volumen Exclusivo</option>
-            <option value="Retoque & Aplicación">Retoque & Mantenimiento</option>
+            <option value="Volumen Exclusivo">Volumen Exclusivo</option>
+            <option value="Retoque & Mantenimiento">Retoque & Mantenimiento</option>
           </select>
         </div>
 
-        <!-- Tag / Fecha -->
         <div class="admin-form-group">
           <label class="admin-form-label" for="formDate">Etiqueta / Fecha Opcional</label>
-          <input type="text" id="formDate" class="admin-form-input" placeholder="Ej: Colección 2026, Retención & Calidad, etc.">
+          <input type="text" id="formDate" class="admin-form-input" placeholder="Ej: Colección 2026, Retención & Calidad">
         </div>
 
-        <!-- Prioridad de Orden -->
         <div class="admin-form-group">
           <label class="admin-form-label" for="formPriority">Prioridad en Catálogo (1 = Primero)</label>
           <input type="number" id="formPriority" class="admin-form-input" min="1" max="99" value="1">
         </div>
 
-        <!-- Estado de Publicación -->
         <div class="admin-form-group">
           <label class="admin-toggle-wrapper">
             <input type="checkbox" id="formPublished" class="admin-toggle-checkbox" checked>
-            <span style="font-size: 13px; font-weight: 600;">Publicar inmediatamente en el catálogo web</span>
+            <span style="font-size: 13px; font-weight: 600;">Publicar inmediatamente en el catálogo</span>
           </label>
         </div>
 
-        <!-- Botones de Guardar -->
         <div style="display: flex; gap: 12px; margin-top: 24px;">
           <button type="button" class="admin-btn admin-btn-secondary" id="cancelModalBtn">Cancelar</button>
           <button type="submit" class="admin-btn" id="saveTestimonialBtn">Guardar Testimonio</button>
@@ -200,7 +457,112 @@
     </div>
   </div>
 
-  <!-- Script del Administrador -->
+  <!-- ================= MODAL SERVICIO / NUEVO EFECTO ================= -->
+  <div class="admin-modal-backdrop" id="serviceModal">
+    <div class="admin-modal-content">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="serviceModalTitle">Nuevo Efecto / Servicio</h3>
+        <button class="admin-modal-close" id="closeServiceModalBtn">✕</button>
+      </div>
+
+      <form id="serviceForm">
+        <input type="hidden" id="serviceFormId">
+
+        <!-- Foto del Servicio -->
+        <div class="admin-form-group">
+          <label class="admin-form-label">Foto del Resultado</label>
+          <div class="admin-dropzone" id="serviceDropzoneBox">
+            <span id="serviceDropzoneText">📸 Arrastra una foto del efecto o haz clic aquí</span>
+            <input type="file" id="serviceFileInput" accept="image/*" style="display: none;">
+            <img id="servicePreviewImg" class="admin-dropzone-preview" alt="Preview">
+          </div>
+        </div>
+
+        <!-- Sliders de Encuadre X/Y -->
+        <div class="admin-form-group">
+          <label class="admin-form-label">Encuadre de Foto: Horizontal (X) & Vertical (Y)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <span style="font-size: 11px; color: var(--admin-text-muted);">Posición Horizontal (X): <strong id="srvPosXVal">50%</strong></span>
+              <input type="range" id="srvSliderX" min="0" max="100" value="50" class="admin-range-slider">
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--admin-text-muted);">Posición Vertical (Y): <strong id="srvPosYVal">30%</strong></span>
+              <input type="range" id="srvSliderY" min="0" max="100" value="30" class="admin-range-slider">
+            </div>
+          </div>
+        </div>
+
+        <!-- Nombre -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="srvName">Nombre del Servicio o Efecto *</label>
+          <input type="text" id="srvName" class="admin-form-input" placeholder="Ej: Efecto Sirena · Fox Eyes" required>
+        </div>
+
+        <!-- Categoría -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="srvCategory">Categoría</label>
+          <select id="srvCategory" class="admin-form-select">
+            <option value="extensiones">Extensiones de Pestañas</option>
+            <option value="lifting">Lifting Coreano</option>
+            <option value="cejas">Diseño y Cejas</option>
+            <option value="hydralips">HydraLips</option>
+            <option value="experiencias">Experiencias y Combos</option>
+            <option value="cuidados">Cuidado en Casa</option>
+          </select>
+        </div>
+
+        <!-- Subtítulo / Tipo -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="srvType">Subtítulo / Tipo de Servicio</label>
+          <input type="text" id="srvType" class="admin-form-input" placeholder="Ej: Diseño de Mirada, Efecto Exclusivo, etc.">
+        </div>
+
+        <!-- Precio & Duración -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="srvPrice">Valor / Precio (COP) *</label>
+            <input type="number" id="srvPrice" class="admin-form-input" placeholder="Ej: 90000" required>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="srvDuration">Duración Estimada</label>
+            <input type="text" id="srvDuration" class="admin-form-input" placeholder="Ej: 2h 15min">
+          </div>
+        </div>
+
+        <!-- Badge -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="srvBadge">Etiqueta Destacada (Badge)</label>
+          <input type="text" id="srvBadge" class="admin-form-input" placeholder="Ej: ⭐ Tendencia 2026, 🔥 Top Ventas, Exclusivo">
+        </div>
+
+        <!-- Descripción -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="srvDesc">Descripción Editorial del Look</label>
+          <textarea id="srvDesc" class="admin-form-textarea" rows="3" placeholder="Describe el efecto, para qué tipo de mirada se recomienda y qué sensación transmite..."></textarea>
+        </div>
+
+        <!-- Tags -->
+        <div class="admin-form-group">
+          <label class="admin-form-label" for="srvTags">Etiquetas / Características (separadas por comas)</label>
+          <input type="text" id="srvTags" class="admin-form-input" placeholder="Ej: Curvatura D, Fibras Japonesas, Mayor Densidad">
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="button" class="admin-btn admin-btn-secondary" id="cancelServiceModalBtn">Cancelar</button>
+          <button type="submit" class="admin-btn" id="saveServiceBtn">Guardar Servicio en la Nube</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container de Notificaciones -->
+  <div class="admin-toast-container" id="adminToastContainer"></div>
+
+  <!-- Input oculto para cambio de foto en Gestor Maestro -->
+  <input type="file" id="masterPhotoFileInput" accept="image/*" style="display: none;">
+
+  <!-- Script del Administrador Total -->
   <script src="js/admin-testimonials.js"></script>
 </body>
 </html>

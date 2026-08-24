@@ -319,7 +319,7 @@ const DEFAULT_CATALOG_DATA = {
       price: 13000,
       retouchAvailable: false,
       image: "assets/img/dep.png", // Foto nueva actualizada
-      imagePosition: "center 30%",
+      imagePosition: "center 72%",
       tags: ["Básico Esencial", "Cera/Hilo"]
     },
     {
@@ -333,7 +333,7 @@ const DEFAULT_CATALOG_DATA = {
       price: 30000,
       retouchAvailable: false,
       image: "assets/img/page_img_16.jpeg",
-      imagePosition: "center 30%",
+      imagePosition: "center 45%",
       tags: ["Sombreado", "Henna Premium"]
     },
     {
@@ -347,7 +347,7 @@ const DEFAULT_CATALOG_DATA = {
       price: 50000,
       retouchAvailable: false,
       image: "assets/img/page_img_17.jpeg",
-      imagePosition: "center 30%",
+      imagePosition: "center 45%",
       tags: ["Laminado", "Definición"]
     },
     {
@@ -361,7 +361,7 @@ const DEFAULT_CATALOG_DATA = {
       price: 60000,
       retouchAvailable: false,
       image: "assets/img/page_img_18.jpeg",
-      imagePosition: "center 30%",
+      imagePosition: "center 45%",
       tags: ["Laminado Premium", "Incluye Hidratante", "Ahorro"]
     },
 
@@ -405,7 +405,7 @@ const DEFAULT_CATALOG_DATA = {
       price: null,
       appointmentTime: "120 - 150 min",
       image: "assets/img/mirada_perfecta.png", // Foto nueva actualizada
-      imagePosition: "center 35%",
+      imagePosition: "center 45%",
       featured: true,
       tags: ["Combo", "Ahorra $10.000", "Top Experiencia"]
     },
@@ -421,7 +421,7 @@ const DEFAULT_CATALOG_DATA = {
       price: null,
       appointmentTime: "150 - 180 min",
       image: "assets/img/sublime.png", // Foto nueva actualizada
-      imagePosition: "center 35%",
+      imagePosition: "center 88%",
       featured: true,
       tags: ["Combo Premium", "Regalo Hidratante $15k"]
     },
@@ -516,19 +516,45 @@ const DEFAULT_CATALOG_DATA = {
 };
 
 /**
- * Gestor de Estado Local / Almacenamiento
+ * Gestor de Estado Local / Almacenamiento & Sincronización en la Nube (Firestore)
  */
 class CatalogState {
   constructor() {
     this.storageKey = "danna_mesa_catalog_v2026_v7";
     this.data = this.loadData();
+    this.initCloudSync();
+  }
+
+  initCloudSync() {
+    // Si Firebase Firestore está disponible en la página, sincronizar en tiempo real desde la nube
+    try {
+      if (typeof firebase !== "undefined" && firebase.firestore) {
+        const db = firebase.firestore();
+        db.collection("catalog_config").doc("main").onSnapshot((doc) => {
+          if (doc.exists) {
+            const cloudData = doc.data();
+            if (cloudData && typeof cloudData === "object") {
+              this.data = { ...DEFAULT_CATALOG_DATA, ...cloudData };
+              try {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+              } catch (e) {}
+              window.dispatchEvent(new CustomEvent("catalogDataChanged", { detail: this.data }));
+            }
+          }
+        }, (err) => {
+          console.warn("[CatalogState] Cloud sync listener notice:", err);
+        });
+      }
+    } catch (e) {
+      console.warn("[CatalogState] Cloud init warning:", e);
+    }
   }
 
   loadData() {
     try {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
-        return JSON.parse(saved);
+        return { ...DEFAULT_CATALOG_DATA, ...JSON.parse(saved) };
       }
     } catch (e) {
       console.warn("No se pudo leer de localStorage:", e);
@@ -546,6 +572,24 @@ class CatalogState {
       console.error("Error al guardar datos:", e);
       return false;
     }
+  }
+
+  async saveToCloud(newData) {
+    this.saveData(newData);
+    try {
+      if (typeof firebase !== "undefined" && firebase.firestore) {
+        const db = firebase.firestore();
+        await db.collection("catalog_config").doc("main").set({
+          ...this.data,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        return true;
+      }
+    } catch (err) {
+      console.error("[CatalogState] Error guardando en la nube:", err);
+      throw err;
+    }
+    return false;
   }
 
   resetToDefaults() {
@@ -583,6 +627,70 @@ class CatalogState {
     }
     if (Number(amount) === 0) return "Gratis";
     return this.data.studio.currencySymbol + " " + Number(amount).toLocaleString("es-CO");
+  }
+
+  /**
+   * Colecciona todas las fotos del sitio para el Gestor Maestro
+   */
+  getAllSitePhotos() {
+    const photos = [];
+
+    // 1. Portada & Hero
+    if (this.data.hero) {
+      photos.push({
+        id: "photo_hero",
+        category: "portada",
+        sectionLabel: "Portada Principal",
+        title: "Fondo de Portada & Hero",
+        currentImg: this.data.hero.image || "assets/img/page_img_1.jpeg",
+        position: this.data.hero.imagePosition || "center 20%",
+        type: "hero",
+        targetKey: "hero.image",
+        posKey: "hero.imagePosition"
+      });
+    }
+
+    // 2. Banner de Experiencias
+    if (this.data.comboBanner) {
+      photos.push({
+        id: "photo_combo_banner",
+        category: "portada",
+        sectionLabel: "Banner Experiencias",
+        title: "Foto Destacada de Rituales & Combos",
+        currentImg: this.data.comboBanner.image || "assets/img/completo2.png",
+        position: this.data.comboBanner.imagePosition || "center 30%",
+        type: "comboBanner",
+        targetKey: "comboBanner.image",
+        posKey: "comboBanner.imagePosition"
+      });
+    }
+
+    // 3. Todos los Servicios & Efectos
+    if (Array.isArray(this.data.services)) {
+      this.data.services.forEach((srv) => {
+        let catGroup = "extensiones";
+        if (srv.categoryId === "lifting") catGroup = "lifting";
+        else if (srv.categoryId === "cejas") catGroup = "cejas";
+        else if (srv.categoryId === "hydralips") catGroup = "hydralips";
+        else if (srv.categoryId === "experiencias") catGroup = "experiencias";
+        else if (srv.categoryId === "cuidados") catGroup = "cuidados";
+
+        photos.push({
+          id: `photo_srv_${srv.id}`,
+          category: catGroup,
+          sectionLabel: srv.type || srv.categoryId,
+          title: srv.name,
+          currentImg: srv.image || "assets/img/page_img_1.jpeg",
+          position: srv.imagePosition || "center 30%",
+          type: "service",
+          serviceId: srv.id,
+          targetKey: `service.${srv.id}.image`,
+          posKey: `service.${srv.id}.imagePosition`
+        });
+      });
+    }
+
+    return photos;
   }
 }
 
