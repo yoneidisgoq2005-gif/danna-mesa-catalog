@@ -98,8 +98,8 @@ const DEFAULT_CATALOG_DATA = {
           id: "lift-res-3",
           src: "assets/img/lifting_3.jpeg",
           title: "Resultado 03",
-          subtitle: "Tinte Intenso & Efecto Pestañina",
-          desc: "Nutrición profunda con tinte negro azabache para un acabado sofisticado.",
+          subtitle: "Intenso y duradero",
+          desc: "Resultados intensos y duración garantizada.",
           position: "center 45%"
         }
       ],
