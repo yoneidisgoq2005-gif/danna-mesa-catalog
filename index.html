@@ -17,8 +17,8 @@
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/luxury-theme.css">
   <link rel="stylesheet" href="css/app.css">
-  <link rel="stylesheet" href="css/lookbook.css">
-  <link rel="stylesheet" href="css/testimonials.css">
+  <link rel="stylesheet" href="css/lookbook.css?v=11">
+  <link rel="stylesheet" href="css/testimonials.css?v=11">
 </head>
 <body>
 
@@ -142,27 +142,35 @@
         </p>
       </section>
 
-      <!-- ================= TESTIMONIOS: LO DICEN ELLAS ================= -->
+      <!-- ================= TESTIMONIOS: LO DICEN ELLAS (CAROUSEL ANIMADO) ================= -->
       <section class="testimonials-section" id="testimonios">
         <div class="testimonials-header">
-          <span class="testimonials-kicker">Experiencias Reales</span>
+          <span class="testimonials-kicker">Experiencias Reales · 100% Auténticas</span>
           <h2 class="testimonials-title">Lo Dicen Ellas</h2>
           <p class="testimonials-subtitle">
-            Mensajes espontáneos que recibimos después de cada cita. La verdadera prueba de nuestro compromiso con tu mirada.
+            Mensajes y conversaciones reales de clientas después de vivir su experiencia en Danna Mesa Studio. Desliza para explorar sus reacciones.
           </p>
         </div>
 
-        <!-- Grilla de Testimonios Dinámicos -->
-        <div class="testimonials-grid" id="testimonialsGrid">
-          <!-- Inyectado por js/testimonials.js -->
-        </div>
+        <!-- Carousel Container Interactivo -->
+        <div class="testimonials-carousel-wrapper" id="testimonialsCarouselWrapper">
+          <button class="carousel-nav-btn prev" id="carouselPrevBtn" aria-label="Testimonio anterior">
+            ‹
+          </button>
 
-        <!-- Carga Progresiva -->
-        <div class="testimonials-actions">
-          <button class="btn-testimonials-more" id="loadMoreTestimonials" style="display: none;">
-            Ver más experiencias ↓
+          <div class="testimonials-carousel-track-container" id="carouselTrackContainer">
+            <div class="testimonials-carousel-track" id="testimonialsGrid">
+              <!-- Inyectado por js/testimonials.js -->
+            </div>
+          </div>
+
+          <button class="carousel-nav-btn next" id="carouselNextBtn" aria-label="Siguiente testimonio">
+            ›
           </button>
         </div>
+
+        <!-- Indicadores / Dots de Navegación -->
+        <div class="testimonials-dots-container" id="testimonialsDotsContainer"></div>
 
         <!-- CTA Post-Testimonios -->
         <div class="testimonials-cta-box">
@@ -287,6 +295,6 @@
   <script src="js/lookbook.js?v=10"></script>
   <script src="js/customizer.js?v=10"></script>
   <script src="js/app.js?v=10"></script>
-  <script src="js/testimonials.js?v=10"></script>
+  <script src="js/testimonials.js?v=11"></script>
 </body>
 </html>
