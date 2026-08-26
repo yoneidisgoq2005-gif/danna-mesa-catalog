@@ -776,3 +776,79 @@ body {
     opacity: 1;
   }
 }
+
+/* ================= GALERÍA MULTI-FOTO EN MODAL DE SERVICIO ================= */
+.admin-service-gallery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-gallery-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--admin-surface-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.admin-gallery-item-preview {
+  width: 70px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  flex-shrink: 0;
+  background: #111;
+}
+
+.admin-gallery-item-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-gallery-item-title-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--admin-border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: var(--admin-text-main);
+  outline: none;
+}
+
+.admin-gallery-item-title-input:focus {
+  border-color: var(--admin-primary);
+}
+
+.admin-gallery-item-sliders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-gallery-item-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--admin-danger);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.admin-gallery-item-delete-btn:hover {
+  background: rgba(224, 82, 82, 0.15);
+}
+

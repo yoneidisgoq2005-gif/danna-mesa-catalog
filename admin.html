@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administración Total — Danna Mesa Studio</title>
-  
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&display=swap" rel="stylesheet">
-  
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/luxury-theme.css">
   <link rel="stylesheet" href="css/admin.css">
@@ -20,22 +20,22 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   
   <!-- Catálogo Base Data State -->
-  <script src="js/data.js"></script>
+  <script src="js/data.js?v=9"></script>
 </head>
 <body>
 
   <!-- ================= VISTA 1: LOGIN ================= -->
   <div class="admin-login-wrapper" id="adminLoginView">
     <div class="admin-login-card">
-      <h1 class="admin-login-brand">Danna Mesa</h1>
-      <span class="admin-login-kicker">Centro de Control en la Nube · Admin</span>
+      <h1 class="admin-login-brand">Danna Mesa Studio</h1>
+      <span class="admin-login-kicker">Centro de Control Cloud</span>
 
       <div class="admin-alert admin-alert-error" id="loginAlertError"></div>
 
       <form id="loginForm">
         <div class="admin-form-group">
-          <label class="admin-form-label" for="loginEmail">Correo Electrónico</label>
-          <input type="email" id="loginEmail" class="admin-form-input" placeholder="tu-correo@gmail.com" required autocomplete="username">
+          <label class="admin-form-label" for="loginEmail">Correo de Administradora</label>
+          <input type="email" id="loginEmail" class="admin-form-input" placeholder="admin@dannamesa.com" required autocomplete="email">
         </div>
 
         <div class="admin-form-group">
@@ -43,7 +43,7 @@
           <input type="password" id="loginPassword" class="admin-form-input" placeholder="••••••••" required autocomplete="current-password">
         </div>
 
-        <button type="submit" class="admin-btn" id="loginSubmitBtn">
+        <button type="submit" class="admin-btn" style="width: 100%; margin-top: 10px;" id="loginSubmitBtn">
           Iniciar Sesión Segura
         </button>
       </form>
@@ -78,13 +78,13 @@
     <nav class="admin-nav-tabs-bar">
       <div class="admin-tabs-scroll">
         <button class="admin-tab-btn active" data-tab="testimonials" id="tabTestimonialsBtn">
-          💬 Testimonios & Social Proof
+          💬 Testimonios
         </button>
         <button class="admin-tab-btn" data-tab="all_photos" id="tabAllPhotosBtn">
           🖼️ Gestor Maestro de Fotos
         </button>
         <button class="admin-tab-btn" data-tab="services" id="tabServicesBtn">
-          ✨ Servicios & Nuevos Efectos
+          ✨ Servicios, Precios & Nuevos Efectos
         </button>
         <button class="admin-tab-btn" data-tab="hero_banners" id="tabHeroBannersBtn">
           🌟 Portada & Banners
@@ -93,10 +93,13 @@
           📜 Políticas de Retoque
         </button>
         <button class="admin-tab-btn" data-tab="studio" id="tabStudioBtn">
-          🏢 Estudio & Redes
+          🏢 Estudio, Redes & Cotizador
+        </button>
+        <button class="admin-tab-btn" data-tab="lookbook_preview" id="tabLookbookBtn">
+          📖 Revista / Lookbook en Vivo
         </button>
         <button class="admin-tab-btn" data-tab="cloud_sync" id="tabCloudSyncBtn">
-          ☁️ Sincronización Cloud
+          ☁️ Sincronización & Respaldos
         </button>
       </div>
     </nav>
@@ -108,7 +111,7 @@
       <section class="admin-tab-content active" id="tabContentTestimonials">
         <div class="admin-header-actions">
           <div>
-            <h2 class="admin-section-title">Experiencias & Capturas de Clientas</h2>
+            <h2 class="admin-section-title">Experiencias & Capturas de Clientas ("Lo Dicen Ellas")</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
               Gestiona los mensajes reales de WhatsApp para generar confianza antes de reservar.
             </p>
@@ -152,7 +155,7 @@
           <div>
             <h2 class="admin-section-title">Gestor Maestro de Todas las Fotos</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
-              Cambia cualquier foto de la web y ajusta su encuadre horizontal/vertical (X/Y) con guardado en tiempo real en Firestore.
+              Cambia cualquier foto de la web y ajusta su encuadre horizontal/vertical (X/Y) con guardado en tiempo real en Firestore y sincronización con la revista.
             </p>
           </div>
 
@@ -177,7 +180,7 @@
 
         <!-- Grid de Fotos del Sitio -->
         <div class="admin-photos-grid" id="adminMasterPhotosGrid">
-          <!-- Inyectado dinámicamente por JS -->
+          <!-- Inyectado por JS -->
         </div>
       </section>
 
@@ -185,17 +188,15 @@
       <section class="admin-tab-content" id="tabContentServices">
         <div class="admin-header-actions">
           <div>
-            <h2 class="admin-section-title">Servicios, Efectos & Precios</h2>
+            <h2 class="admin-section-title">Servicios, Precios & Nuevos Efectos</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
-              Modifica precios existentes o crea nuevos efectos de pestañas y cejas con foto, descripción y badges.
+              Crea nuevos efectos (ej: Wispy, Sirena, Wet Look), modifica precios, tiempos y retoques. Todo se sincroniza con el cotizador y la revista.
             </p>
           </div>
 
-          <div class="admin-btn-group">
-            <button class="admin-btn" id="openNewServiceModalBtn">
-              + Nuevo Efecto / Servicio
-            </button>
-          </div>
+          <button class="admin-btn" id="openNewServiceModalBtn">
+            + Nuevo Efecto / Servicio
+          </button>
         </div>
 
         <!-- Grid de Servicios -->
@@ -210,7 +211,7 @@
           <div>
             <h2 class="admin-section-title">Portada & Banners Destacados</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
-              Ajusta la frase de bienvenida, el banner de combos y sus fórmulas de descuento.
+              Ajusta la frase de bienvenida, el manifiesto editorial, el banner de combos y sus fórmulas de descuento.
             </p>
           </div>
         </div>
@@ -219,15 +220,23 @@
           <h3 class="admin-card-subtitle">🌟 Portada Principal (Hero)</h3>
           <div class="admin-form-group">
             <label class="admin-form-label">Badge Superior</label>
-            <input type="text" id="heroFormBadge" class="admin-form-input">
+            <input type="text" id="heroFormBadge" class="admin-form-input" placeholder="Colección 2026 · Studio Experience">
           </div>
           <div class="admin-form-group">
-            <label class="admin-form-label">Título del Estudio</label>
-            <input type="text" id="heroFormTitle" class="admin-form-input">
+            <label class="admin-form-label">Título Principal</label>
+            <input type="text" id="heroFormTitle" class="admin-form-input" placeholder="Danna Mesa">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Subtítulo / Especialidad</label>
+            <input type="text" id="heroFormSubtitle" class="admin-form-input" placeholder="Pestañas · Cejas · Labios">
           </div>
           <div class="admin-form-group">
             <label class="admin-form-label">Frase de Bienvenida / Manifiesto Editorial</label>
-            <textarea id="heroFormWelcomeLead" class="admin-form-textarea" rows="3"></textarea>
+            <textarea id="heroFormWelcomeLead" class="admin-form-textarea" rows="3" placeholder="Hay un detalle que me obsesiona..."></textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Texto Secundario de Bienvenida</label>
+            <textarea id="heroFormWelcomeText" class="admin-form-textarea" rows="2" placeholder="En eso se me va el tiempo, y por eso mis clientas vuelven..."></textarea>
           </div>
 
           <hr style="border: none; border-top: 1px solid var(--admin-border); margin: 28px 0;">
@@ -235,7 +244,7 @@
           <h3 class="admin-card-subtitle">⭐ Banner de Experiencias & Combos</h3>
           <div class="admin-form-group">
             <label class="admin-form-label">Título del Banner</label>
-            <input type="text" id="comboFormTitle" class="admin-form-input">
+            <input type="text" id="comboFormTitle" class="admin-form-input" placeholder="Experiencias & Rituales">
           </div>
           <div class="admin-form-group">
             <label class="admin-form-label">Descripción</label>
@@ -255,7 +264,7 @@
           </div>
 
           <button type="submit" class="admin-btn" style="margin-top: 16px;">
-            Guardar Cambios de Portada & Banners en la Nube
+            Guardar Portada & Banners en Firestore
           </button>
         </form>
       </section>
@@ -281,7 +290,7 @@
             <textarea id="policiesFormSubtitle" class="admin-form-textarea" rows="2"></textarea>
           </div>
           <div class="admin-form-group">
-            <label class="admin-form-label">Condiciones (Una por línea)</label>
+            <label class="admin-form-label">Condiciones de Retoque (Una por línea)</label>
             <textarea id="policiesFormConditions" class="admin-form-textarea" rows="6"></textarea>
           </div>
           <div class="admin-form-group">
@@ -299,25 +308,33 @@
       <section class="admin-tab-content" id="tabContentStudio">
         <div class="admin-header-actions">
           <div>
-            <h2 class="admin-section-title">Estudio, Ubicación & Redes</h2>
+            <h2 class="admin-section-title">Estudio, Ubicación, Redes & Cotizador</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
-              Información de contacto oficial de WhatsApp, Instagram y TikTok.
+              Información de contacto oficial de WhatsApp, Instagram, TikTok y configuración de reservas.
             </p>
           </div>
         </div>
 
         <form id="studioForm" class="admin-card-section">
           <div class="admin-form-group">
-            <label class="admin-form-label">Nombre del Estudio</label>
+            <label class="admin-form-label">Nombre del Estudio / Marca</label>
             <input type="text" id="studioFormName" class="admin-form-input">
           </div>
           <div class="admin-form-group">
-            <label class="admin-form-label">Ubicación</label>
+            <label class="admin-form-label">Slogan Oficial</label>
+            <input type="text" id="studioFormSlogan" class="admin-form-input" placeholder="Tu mirada, nuestro sello.">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Ubicación del Estudio</label>
             <input type="text" id="studioFormLocation" class="admin-form-input">
           </div>
           <div class="admin-form-group">
             <label class="admin-form-label">Número de WhatsApp (con código de país, ej: 573006279079)</label>
             <input type="text" id="studioFormWhatsapp" class="admin-form-input">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">WhatsApp Display (Formato visual, ej: +57 300 627 9079)</label>
+            <input type="text" id="studioFormWhatsappDisplay" class="admin-form-input">
           </div>
           <div class="admin-form-group">
             <label class="admin-form-label">Instagram (@usuario)</label>
@@ -334,11 +351,30 @@
         </form>
       </section>
 
-      <!-- ================= TAB 7: SINCRONIZACIÓN CLOUD ================= -->
+      <!-- ================= TAB 7: VISTA PREVIA DE LA REVISTA (LOOKBOOK) ================= -->
+      <section class="admin-tab-content" id="tabContentLookbookPreview">
+        <div class="admin-header-actions">
+          <div>
+            <h2 class="admin-section-title">Vista Previa en Vivo de la Revista (Lookbook)</h2>
+            <p style="font-size: 13px; color: var(--admin-text-muted);">
+              Verifica exactamente cómo se reflejan tus fotos, encuadres, nuevos efectos y precios en la versión editorial.
+            </p>
+          </div>
+          <a href="index.html#lookbook" target="_blank" class="admin-btn admin-btn-secondary">
+            📖 Abrir Revista en Pestaña Nueva
+          </a>
+        </div>
+
+        <div class="admin-card-section" style="padding: 12px; height: 750px; border-radius: var(--admin-radius); overflow: hidden;">
+          <iframe id="adminLookbookIframe" src="index.html" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+        </div>
+      </section>
+
+      <!-- ================= TAB 8: SINCRONIZACIÓN & RESPALDOS ================= -->
       <section class="admin-tab-content" id="tabContentCloudSync">
         <div class="admin-header-actions">
           <div>
-            <h2 class="admin-section-title">Sincronización & Base de Datos Cloud</h2>
+            <h2 class="admin-section-title">Sincronización Cloud & Copias de Seguridad</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
               Herramientas de respaldo, migración masiva y restauración de fábrica.
             </p>
@@ -355,21 +391,39 @@
           </div>
         </div>
 
-        <div class="admin-card-section" style="margin-top: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <div class="admin-card-section" style="margin-top: 20px; display: flex; flex-direction: column; gap: 20px;">
           <div>
-            <h3 style="font-size: 16px; margin-bottom: 6px;">⚡ Migrar Catálogo Completo a Firestore</h3>
+            <h3 style="font-size: 16px; margin-bottom: 6px;">🚀 Sincronizar Todo el Catálogo a la Nube</h3>
             <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 12px;">
-              Sube todas las fotos, servicios, precios y textos originales a la base de datos de la nube con un solo clic.
+              Sube todas las fotos, servicios, precios, políticas y textos actuales a la base de datos Firestore.
             </p>
             <button class="admin-btn" id="btnPushAllToCloud" style="width: auto;">
-              🚀 Subir Catálogo Completo a la Nube
+              🚀 Subir Catálogo Completo a Firestore
             </button>
           </div>
 
-          <hr style="border: none; border-top: 1px solid var(--admin-border); margin: 8px 0;">
+          <hr style="border: none; border-top: 1px solid var(--admin-border);">
 
           <div>
-            <h3 style="font-size: 16px; margin-bottom: 6px; color: var(--admin-danger);">⚠️ Restablecer Valores Originales</h3>
+            <h3 style="font-size: 16px; margin-bottom: 6px;">💾 Copia de Seguridad Local (JSON)</h3>
+            <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 12px;">
+              Descarga un archivo con toda la configuración actual o restaura un archivo guardado anteriormente.
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="admin-btn admin-btn-secondary" id="btnDownloadBackupJson">
+                📥 Descargar Copia de Seguridad JSON
+              </button>
+              <button class="admin-btn admin-btn-secondary" id="btnTriggerRestoreJson">
+                📤 Restaurar desde Archivo JSON
+              </button>
+              <input type="file" id="restoreJsonFileInput" accept=".json" style="display: none;">
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--admin-border);">
+
+          <div>
+            <h3 style="font-size: 16px; margin-bottom: 6px; color: var(--admin-danger);">⚠️ Restablecer Valores Originales de Fábrica</h3>
             <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 12px;">
               Restaura la colección 2026 oficial por defecto de Danna Mesa.
             </p>
@@ -411,7 +465,7 @@
         <div class="admin-form-group">
           <label class="admin-form-label" for="formClientName">Nombre o Alias de la Clienta *</label>
           <input type="text" id="formClientName" class="admin-form-input" placeholder="Ej: Laura M." required>
-          <div class="admin-chips-row">
+          <div class="admin-chips-row" style="margin-top: 8px;">
             <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Verificada'">Clienta Verificada</button>
             <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Frecuente'">Clienta Frecuente</button>
             <button type="button" class="admin-chip-btn" onclick="document.getElementById('formClientName').value = 'Clienta Studio'">Clienta Studio</button>
@@ -512,10 +566,10 @@
           </select>
         </div>
 
-        <!-- Subtítulo / Tipo -->
+        <!-- Subtítulo / Kicker -->
         <div class="admin-form-group">
-          <label class="admin-form-label" for="srvType">Subtítulo / Tipo de Servicio</label>
-          <input type="text" id="srvType" class="admin-form-input" placeholder="Ej: Diseño de Mirada, Efecto Exclusivo, etc.">
+          <label class="admin-form-label" for="srvType">Subtítulo / Kicker</label>
+          <input type="text" id="srvType" class="admin-form-input" placeholder="Ej: 01 · Resultado sutil, Efecto Exclusivo, etc.">
         </div>
 
         <!-- Precio & Duración -->
@@ -525,8 +579,24 @@
             <input type="number" id="srvPrice" class="admin-form-input" placeholder="Ej: 90000" required>
           </div>
           <div class="admin-form-group">
-            <label class="admin-form-label" for="srvDuration">Duración Estimada</label>
-            <input type="text" id="srvDuration" class="admin-form-input" placeholder="Ej: 2h 15min">
+            <label class="admin-form-label" for="srvDuration">Duración del Resultado</label>
+            <input type="text" id="srvDuration" class="admin-form-input" placeholder="Ej: 3 a 5 semanas">
+          </div>
+        </div>
+
+        <!-- Tiempo de Cita & Retoques -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="srvAppointmentTime">Tiempo de Cita</label>
+            <input type="text" id="srvAppointmentTime" class="admin-form-input" placeholder="Ej: 90 - 120 min">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="srvRetouch15_21">Retoque (15-21d)</label>
+            <input type="number" id="srvRetouch15_21" class="admin-form-input" placeholder="Ej: 50000">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="srvRetouch18_21">Retoque (18-21d)</label>
+            <input type="number" id="srvRetouch18_21" class="admin-form-input" placeholder="Ej: 60000">
           </div>
         </div>
 
@@ -548,6 +618,26 @@
           <input type="text" id="srvTags" class="admin-form-input" placeholder="Ej: Curvatura D, Fibras Japonesas, Mayor Densidad">
         </div>
 
+        <!-- ================= GALERÍA MULTI-FOTO DE OTRAS CLIENTAS / EVIDENCIAS ================= -->
+        <div class="admin-form-group" style="margin-top: 24px; border-top: 1px dashed var(--admin-border); padding-top: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <label class="admin-form-label" style="margin: 0; color: var(--admin-primary);">📸 Galería de Resultados Reales (Múltiples Clientas)</label>
+              <p style="font-size: 11.5px; color: var(--admin-text-muted); margin: 2px 0 0;">
+                Sube fotos adicionales de este mismo efecto aplicado en diferentes clientas o tipos de ojo.
+              </p>
+            </div>
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="btnAddGalleryItemBtn">
+              + Agregar Foto de Clienta
+            </button>
+            <input type="file" id="addGalleryFileInput" accept="image/*" style="display: none;">
+          </div>
+
+          <div id="serviceGalleryListContainer" class="admin-service-gallery-list">
+            <!-- Inyectado dinámicamente -->
+          </div>
+        </div>
+
         <div style="display: flex; gap: 12px; margin-top: 24px;">
           <button type="button" class="admin-btn admin-btn-secondary" id="cancelServiceModalBtn">Cancelar</button>
           <button type="submit" class="admin-btn" id="saveServiceBtn">Guardar Servicio en la Nube</button>
@@ -563,6 +653,6 @@
   <input type="file" id="masterPhotoFileInput" accept="image/*" style="display: none;">
 
   <!-- Script del Administrador Total -->
-  <script src="js/admin-testimonials.js"></script>
+  <script src="js/admin-testimonials.js?v=10"></script>
 </body>
 </html>

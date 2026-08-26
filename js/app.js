@@ -398,19 +398,21 @@ class CatalogApp {
         `;
       }
 
-      // Galería interactiva si el servicio tiene fotos adicionales
+      // Galería interactiva si el servicio tiene fotos adicionales de clientas
       let galleryThumbsHtml = "";
       if (service.gallery && service.gallery.length > 0) {
+        const isBa = service.beforeImage && service.afterImage;
+        const mainLabel = isBa ? 'Antes/Desp.' : 'Principal';
         galleryThumbsHtml = `
-          <div class="service-gallery-thumbs">
-            <button class="gallery-thumb-btn active" data-card-thumb="${service.id}" data-target-type="ba" title="Ver Antes y Después">
-              <img src="${service.afterImage || service.image}" alt="Antes y Después">
-              <span class="thumb-label">Antes/Desp.</span>
+          <div class="service-gallery-thumbs" title="Ver resultados en diferentes clientas">
+            <button class="gallery-thumb-btn active" data-card-thumb="${service.id}" data-target-type="${isBa ? 'ba' : 'main'}" data-src="${service.image}" data-pos="${service.imagePosition || 'center 30%'}" data-title="${service.name} (Principal)" title="${isBa ? 'Ver Antes y Después' : 'Foto Principal'}">
+              <img src="${isBa ? service.afterImage : service.image}" alt="${service.name}">
+              <span class="thumb-label">${mainLabel}</span>
             </button>
             ${service.gallery.map((g, idx) => `
-              <button class="gallery-thumb-btn" data-card-thumb="${service.id}" data-target-type="gallery" data-src="${g.src}" data-pos="${g.position || 'center 30%'}" data-title="${g.title}: ${g.subtitle}" title="${g.title}">
-                <img src="${g.src}" alt="${g.title}">
-                <span class="thumb-label">Res. 0${idx + 1}</span>
+              <button class="gallery-thumb-btn" data-card-thumb="${service.id}" data-target-type="gallery" data-src="${g.src}" data-pos="${g.position || 'center 30%'}" data-title="${service.name} — ${g.title || `Clienta 0${idx + 1}`}${g.subtitle ? ': ' + g.subtitle : ''}" title="${g.title || `Clienta 0${idx + 1}`}">
+                <img src="${g.src}" alt="${g.title || `Clienta 0${idx + 1}`}">
+                <span class="thumb-label">${g.title || `Clienta 0${idx + 1}`}</span>
               </button>
             `).join("")}
           </div>
@@ -534,13 +536,22 @@ class CatalogApp {
             </div>
           `;
           this.initBeforeAfterSliders();
+        } else if (type === "main") {
+          host.innerHTML = `
+            <div class="service-card-media" data-lightbox-src="${service.image}" data-lightbox-caption="${service.name} (Principal)" style="cursor: pointer;">
+              <img src="${service.image || 'assets/img/page_img_1.jpeg'}" alt="${service.name}" style="object-position: ${service.imagePosition || 'center center'};">
+              <span class="service-badge-tag">${service.badge || service.type || 'Principal'}</span>
+              <div class="result-photo-zoom-icon" style="opacity: 1; transform: scale(1);">🔍</div>
+            </div>
+          `;
+          this.initLightbox();
         } else {
           const src = btn.dataset.src;
           const pos = btn.dataset.pos || "center center";
           host.innerHTML = `
             <div class="service-card-media" data-lightbox-src="${src}" data-lightbox-caption="${btn.dataset.title || service.name}" style="cursor: pointer;">
               <img src="${src}" alt="${service.name}" style="object-position: ${pos};">
-              <span class="service-badge-tag">${btn.getAttribute("title") || "Resultado"}</span>
+              <span class="service-badge-tag">${btn.getAttribute("title") || "Evidencia Real"}</span>
               <div class="result-photo-zoom-icon" style="opacity: 1; transform: scale(1);">🔍</div>
             </div>
           `;

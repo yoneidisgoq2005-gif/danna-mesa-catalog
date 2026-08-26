@@ -520,7 +520,7 @@ const DEFAULT_CATALOG_DATA = {
  */
 class CatalogState {
   constructor() {
-    this.storageKey = "danna_mesa_catalog_v2026_v7";
+    this.storageKey = "danna_mesa_catalog_v2026_v10";
     this.data = this.loadData();
     this.initCloudSync();
   }
@@ -679,7 +679,7 @@ class CatalogState {
           id: `photo_srv_${srv.id}`,
           category: catGroup,
           sectionLabel: srv.type || srv.categoryId,
-          title: srv.name,
+          title: `${srv.name} (Principal)`,
           currentImg: srv.image || "assets/img/page_img_1.jpeg",
           position: srv.imagePosition || "center 30%",
           type: "service",
@@ -687,6 +687,24 @@ class CatalogState {
           targetKey: `service.${srv.id}.image`,
           posKey: `service.${srv.id}.imagePosition`
         });
+
+        // 3.1 Fotos adicionales de la galería (Evidencias de otras clientas)
+        if (Array.isArray(srv.gallery)) {
+          srv.gallery.forEach((g, gIdx) => {
+            photos.push({
+              id: `photo_srv_${srv.id}_gallery_${g.id || gIdx}`,
+              category: catGroup,
+              sectionLabel: `${srv.name} · Evidencia`,
+              title: `${srv.name} — ${g.title || `Clienta 0${gIdx + 1}`}`,
+              currentImg: g.src,
+              position: g.position || "center 30%",
+              type: "service_gallery",
+              serviceId: srv.id,
+              galleryId: g.id || `g_${gIdx}`,
+              galleryIndex: gIdx
+            });
+          });
+        }
       });
     }
 

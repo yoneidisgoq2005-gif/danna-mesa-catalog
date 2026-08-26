@@ -1,7 +1,7 @@
 /**
  * ==========================================================================
- * DANNA MESA STUDIO — CENTRO DE CONTROL TOTAL EN LA NUBE (ADMIN HUB)
- * Gestión Unificada: Testimonios, Fotos, Servicios, Efectos, Portada & Firestore
+ * DANNA MESA STUDIO — CENTRO DE CONTROL TOTAL EN LA NUBE (ADMIN HUB V10)
+ * Gestión Unificada: Testimonios, Fotos, Servicios, Galería Multi-Clienta, Portada, Revista & Firestore
  * ==========================================================================
  */
 
@@ -97,6 +97,7 @@
       this.testimonials = [];
       this.currentTestimonialBase64 = null;
       this.currentServiceBase64 = null;
+      this.currentEditingServiceGallery = [];
       this.targetPhotoChangeItem = null;
 
       this.initFirebase();
@@ -106,7 +107,7 @@
 
     initFirebase() {
       if (typeof firebase === 'undefined') {
-        alert("Error cargando SDK de Firebase. Revisa tu conexión.");
+        alert("Error cargando SDK de Firebase. Revisa tu conexión a internet.");
         return;
       }
 
@@ -176,6 +177,7 @@
       this.adminMasterPhotosGrid = document.getElementById("adminMasterPhotosGrid");
       this.masterPhotoFileInput = document.getElementById("masterPhotoFileInput");
       this.photoFilterBtns = document.querySelectorAll("#photoCategoryFilters .admin-chip-btn");
+      this.btnSaveAllPhotosPositions = document.getElementById("btnSaveAllPhotosPositions");
 
       // Services Elements
       this.adminServicesListGrid = document.getElementById("adminServicesListGrid");
@@ -199,19 +201,33 @@
       this.srvType = document.getElementById("srvType");
       this.srvPrice = document.getElementById("srvPrice");
       this.srvDuration = document.getElementById("srvDuration");
+      this.srvAppointmentTime = document.getElementById("srvAppointmentTime");
+      this.srvRetouch15_21 = document.getElementById("srvRetouch15_21");
+      this.srvRetouch18_21 = document.getElementById("srvRetouch18_21");
       this.srvBadge = document.getElementById("srvBadge");
       this.srvDesc = document.getElementById("srvDesc");
       this.srvTags = document.getElementById("srvTags");
       this.saveServiceBtn = document.getElementById("saveServiceBtn");
+
+      // Multi-Photo Evidence Gallery Elements in Service Modal
+      this.serviceGalleryListContainer = document.getElementById("serviceGalleryListContainer");
+      this.btnAddGalleryItemBtn = document.getElementById("btnAddGalleryItemBtn");
+      this.addGalleryFileInput = document.getElementById("addGalleryFileInput");
 
       // Forms
       this.heroBannerForm = document.getElementById("heroBannerForm");
       this.policiesForm = document.getElementById("policiesForm");
       this.studioForm = document.getElementById("studioForm");
 
-      // Cloud Sync
+      // Lookbook Iframe
+      this.adminLookbookIframe = document.getElementById("adminLookbookIframe");
+
+      // Cloud Sync & Backups
       this.btnPushAllToCloud = document.getElementById("btnPushAllToCloud");
       this.btnResetAllToDefaults = document.getElementById("btnResetAllToDefaults");
+      this.btnDownloadBackupJson = document.getElementById("btnDownloadBackupJson");
+      this.btnTriggerRestoreJson = document.getElementById("btnTriggerRestoreJson");
+      this.restoreJsonFileInput = document.getElementById("restoreJsonFileInput");
     }
 
     bindEvents() {
@@ -248,9 +264,9 @@
         this.masterPhotoFileInput.addEventListener("change", (e) => this.handleMasterPhotoFileSelected(e));
       }
 
-      const btnSavePhotos = document.getElementById("btnSaveAllPhotosPositions");
-      if (btnSavePhotos) {
-        btnSavePhotos.addEventListener("click", () => this.handleSaveAllPhotosPositions());
+      // Botón Guardar Todos los Encuadres
+      if (this.btnSaveAllPhotosPositions) {
+        this.btnSaveAllPhotosPositions.addEventListener("click", () => this.handleSaveAllPhotosPositions());
       }
 
       // Testimonios Events
@@ -299,6 +315,12 @@
         this.serviceForm.addEventListener("submit", (e) => this.handleSaveService(e));
       }
 
+      // Multi-Photo Evidence Gallery Add Trigger
+      if (this.btnAddGalleryItemBtn && this.addGalleryFileInput) {
+        this.btnAddGalleryItemBtn.addEventListener("click", () => this.addGalleryFileInput.click());
+        this.addGalleryFileInput.addEventListener("change", (e) => this.handleAddGalleryFileSelected(e));
+      }
+
       // Service Dropzone
       if (this.serviceDropzoneBox && this.serviceFileInput) {
         this.serviceDropzoneBox.addEventListener("click", () => this.serviceFileInput.click());
@@ -343,12 +365,19 @@
         this.studioForm.addEventListener("submit", (e) => this.handleSaveStudio(e));
       }
 
-      // Cloud Sync Buttons
+      // Cloud Sync & Backups Buttons
       if (this.btnPushAllToCloud) {
         this.btnPushAllToCloud.addEventListener("click", () => this.handlePushAllToCloud());
       }
       if (this.btnResetAllToDefaults) {
         this.btnResetAllToDefaults.addEventListener("click", () => this.handleResetAllDefaults());
+      }
+      if (this.btnDownloadBackupJson) {
+        this.btnDownloadBackupJson.addEventListener("click", () => this.handleDownloadBackupJson());
+      }
+      if (this.btnTriggerRestoreJson && this.restoreJsonFileInput) {
+        this.btnTriggerRestoreJson.addEventListener("click", () => this.restoreJsonFileInput.click());
+        this.restoreJsonFileInput.addEventListener("change", (e) => this.handleRestoreJsonFileSelected(e));
       }
 
       // Listener para cambios en datos del catálogo
@@ -356,6 +385,11 @@
         this.populateFormsFromState();
         if (this.activeTab === "all_photos") this.renderMasterPhotos();
         if (this.activeTab === "services") this.renderServicesList();
+        if (this.activeTab === "lookbook_preview" && this.adminLookbookIframe) {
+          try {
+            this.adminLookbookIframe.contentWindow.location.reload();
+          } catch (e) {}
+        }
       });
     }
 
@@ -437,6 +471,11 @@
       if (tabKey === "testimonials") this.loadTestimonials();
       if (tabKey === "all_photos") this.renderMasterPhotos();
       if (tabKey === "services") this.renderServicesList();
+      if (tabKey === "lookbook_preview" && this.adminLookbookIframe) {
+        try {
+          this.adminLookbookIframe.src = "index.html#lookbook";
+        } catch (e) {}
+      }
     }
 
     // ================= 1. TESTIMONIOS =================
@@ -549,7 +588,7 @@
         });
 
         await batch.commit();
-        alert("¡7 testimonios reales guardados exitosamente en Firestore!");
+        this.showToast("¡7 testimonios reales guardados exitosamente en Firestore!", "success");
         await this.loadTestimonials();
       } catch (err) {
         console.error("Error seeding:", err);
@@ -640,6 +679,7 @@
         }
 
         this.closeTestimonialModal();
+        this.showToast("✓ Testimonio guardado exitosamente en Firestore", "success");
         await this.loadTestimonials();
       } catch (err) {
         alert("Error al guardar: " + err.message);
@@ -774,13 +814,18 @@
       } else if (photo.type === "service") {
         const srv = this.state.getServiceById(photo.serviceId);
         if (srv) srv.imagePosition = newPos;
+      } else if (photo.type === "service_gallery") {
+        const srv = this.state.getServiceById(photo.serviceId);
+        if (srv && Array.isArray(srv.gallery) && srv.gallery[photo.galleryIndex]) {
+          srv.gallery[photo.galleryIndex].position = newPos;
+        }
       }
     }
 
     async savePhotoPositionToCloud(photoId) {
       try {
         await this.state.saveToCloud(this.state.data);
-        this.showToast("✓ Encuadre guardado en la nube en tiempo real", "success");
+        this.showToast("✓ Encuadre guardado en Firestore en tiempo real", "success");
       } catch (err) {
         console.error("Error saving position to cloud:", err);
         this.showToast("Error guardando encuadre: " + err.message, "error");
@@ -807,23 +852,6 @@
       }
     }
 
-    showToast(message, type = "success") {
-      const container = document.getElementById("adminToastContainer");
-      if (!container) return;
-
-      const toast = document.createElement("div");
-      toast.className = `admin-toast ${type}`;
-      toast.innerHTML = `<span>${type === 'success' ? '✓' : '⚠️'}</span> <span>${this.escapeHtml(message)}</span>`;
-      container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = "0";
-        toast.style.transform = "translateY(10px)";
-        toast.style.transition = "all 0.3s ease";
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
-    }
-
     triggerPhotoChange(photoId) {
       const allPhotos = this.state.getAllSitePhotos();
       const photo = allPhotos.find(p => p.id === photoId);
@@ -848,12 +876,17 @@
         } else if (photo.type === "service") {
           const srv = this.state.getServiceById(photo.serviceId);
           if (srv) srv.image = compressedBase64;
+        } else if (photo.type === "service_gallery") {
+          const srv = this.state.getServiceById(photo.serviceId);
+          if (srv && Array.isArray(srv.gallery) && srv.gallery[photo.galleryIndex]) {
+            srv.gallery[photo.galleryIndex].src = compressedBase64;
+          }
         }
 
         try {
           await this.state.saveToCloud(this.state.data);
           this.renderMasterPhotos();
-          alert(`¡Foto de "${photo.title}" actualizada y guardada en la nube con éxito!`);
+          this.showToast(`¡Foto de "${photo.title}" actualizada y guardada en Firestore!`, "success");
         } catch (err) {
           alert("Error guardando en la nube: " + err.message);
         }
@@ -866,31 +899,39 @@
       const services = this.state.data.services || [];
 
       this.adminServicesListGrid.innerHTML = services.map((srv) => {
+        const galleryCount = (srv.gallery && Array.isArray(srv.gallery)) ? srv.gallery.length : 0;
         return `
           <div class="admin-service-card" data-srvid="${srv.id}">
             <div class="admin-service-header">
               <div>
                 <h4 class="admin-service-title">${this.escapeHtml(srv.name)}</h4>
                 <span style="font-size: 11px; color: var(--admin-text-muted); text-transform: uppercase; letter-spacing: 0.1em;">
-                  ${this.escapeHtml(srv.type || srv.categoryId)}
+                  ${this.escapeHtml(srv.subtitle || srv.type || srv.categoryId)}
                 </span>
               </div>
-              <span class="admin-service-price-pill">${this.state.formatMoney(srv.price)}</span>
+              <span class="admin-service-price-pill">${srv.price ? this.state.formatMoney(srv.price) : (srv.customPriceLabel || 'Tarifa Especial')}</span>
             </div>
 
-            <img 
-              src="${srv.image || 'assets/img/page_img_1.jpeg'}" 
-              style="width: 100%; height: 130px; object-fit: cover; object-position: ${srv.imagePosition || 'center 30%'}; border-radius: 6px; border: 1px solid var(--admin-border);"
-              alt="${this.escapeHtml(srv.name)}"
-            >
+            <div style="position: relative;">
+              <img 
+                src="${srv.image || 'assets/img/page_img_1.jpeg'}" 
+                style="width: 100%; height: 130px; object-fit: cover; object-position: ${srv.imagePosition || 'center 30%'}; border-radius: 6px; border: 1px solid var(--admin-border);"
+                alt="${this.escapeHtml(srv.name)}"
+              >
+              ${galleryCount > 0 ? `
+                <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">
+                  📸 +${galleryCount} Fotos de Clientas
+                </span>
+              ` : ''}
+            </div>
 
             <p style="font-size: 12.5px; color: var(--admin-text-muted); line-height: 1.4; margin: 0;">
-              ${this.escapeHtml(srv.desc || srv.subtitle || '')}
+              ${this.escapeHtml(srv.desc || '')}
             </p>
 
             <div style="display: flex; gap: 8px; margin-top: auto;">
               <button class="admin-btn admin-btn-secondary admin-btn-sm" style="flex: 1;" onclick="window.adminApp.openServiceModalForEdit('${srv.id}')">
-                ✏️ Editar Look & Precio
+                ✏️ Editar Look & Clientas
               </button>
               <button class="admin-btn admin-btn-danger admin-btn-sm" onclick="window.adminApp.deleteService('${srv.id}')">
                 🗑️
@@ -908,7 +949,10 @@
       this.srvCategory.value = "extensiones";
       this.srvType.value = "Diseño Exclusivo";
       this.srvPrice.value = "";
-      this.srvDuration.value = "2 horas";
+      this.srvDuration.value = "3 a 5 semanas";
+      this.srvAppointmentTime.value = "90 - 120 min";
+      this.srvRetouch15_21.value = "";
+      this.srvRetouch18_21.value = "";
       this.srvBadge.value = "✨ Tendencia 2026";
       this.srvDesc.value = "";
       this.srvTags.value = "Efecto Especial, Exclusivo Danna Mesa";
@@ -917,9 +961,11 @@
       this.srvPosXVal.textContent = "50%";
       this.srvPosYVal.textContent = "30%";
       this.currentServiceBase64 = null;
+      this.currentEditingServiceGallery = [];
 
       this.servicePreviewImg.style.display = "none";
       this.serviceDropzoneText.style.display = "block";
+      this.renderServiceModalGallery();
       this.serviceModal.classList.add("active");
     }
 
@@ -931,11 +977,14 @@
       this.serviceModalTitle.textContent = `Editar: ${srv.name}`;
       this.srvName.value = srv.name || "";
       this.srvCategory.value = srv.categoryId || "extensiones";
-      this.srvType.value = srv.type || "";
+      this.srvType.value = srv.subtitle || srv.type || "";
       this.srvPrice.value = srv.price || "";
       this.srvDuration.value = srv.duration || "";
+      this.srvAppointmentTime.value = srv.appointmentTime || "";
+      this.srvRetouch15_21.value = srv.retouch15_21 || "";
+      this.srvRetouch18_21.value = srv.retouch18_21 || "";
       this.srvBadge.value = srv.badge || "";
-      this.srvDesc.value = srv.desc || srv.subtitle || "";
+      this.srvDesc.value = srv.desc || "";
       this.srvTags.value = Array.isArray(srv.tags) ? srv.tags.join(", ") : (srv.tags || "");
 
       const parts = (srv.imagePosition || "50% 30%").replace(/center/g, "50%").split(" ");
@@ -958,6 +1007,12 @@
         this.serviceDropzoneText.style.display = "block";
       }
 
+      // Cargar galería de evidencias de clientas
+      this.currentEditingServiceGallery = (srv.gallery && Array.isArray(srv.gallery)) 
+        ? JSON.parse(JSON.stringify(srv.gallery)) 
+        : [];
+      this.renderServiceModalGallery();
+
       this.serviceModal.classList.add("active");
     }
 
@@ -965,19 +1020,148 @@
       this.serviceModal.classList.remove("active");
     }
 
+    // Manejo de Fotos Adicionales de Clientas (Galería)
+    handleAddGalleryFileSelected(e) {
+      if (!e.target.files || !e.target.files[0]) return;
+      const file = e.target.files[0];
+
+      this.compressImage(file, 1200, 0.85, (compressedBase64) => {
+        const itemNumber = this.currentEditingServiceGallery.length + 1;
+        const newItem = {
+          id: "g_" + Date.now(),
+          src: compressedBase64,
+          title: `Clienta 0${itemNumber}`,
+          subtitle: "Resultado Real",
+          desc: "Evidencia de aplicación en pestaña natural.",
+          position: "center 30%"
+        };
+
+        this.currentEditingServiceGallery.push(newItem);
+        this.renderServiceModalGallery();
+        this.addGalleryFileInput.value = "";
+      });
+    }
+
+    renderServiceModalGallery() {
+      if (!this.serviceGalleryListContainer) return;
+
+      if (!this.currentEditingServiceGallery || this.currentEditingServiceGallery.length === 0) {
+        this.serviceGalleryListContainer.innerHTML = `
+          <p style="font-size: 12px; color: var(--admin-text-muted); font-style: italic; padding: 12px 0;">
+            Aún no has agregado fotos adicionales de otras clientas para este efecto. Haz clic en <strong>"+ Agregar Foto de Clienta"</strong> arriba para añadir más resultados.
+          </p>
+        `;
+        return;
+      }
+
+      this.serviceGalleryListContainer.innerHTML = this.currentEditingServiceGallery.map((gItem, idx) => {
+        const parts = (gItem.position || "50% 30%").replace(/center/g, "50%").split(" ");
+        const posX = parseInt(parts[0], 10) || 50;
+        const posY = parseInt(parts[1], 10) || 30;
+
+        return `
+          <div class="admin-gallery-item-row" data-gid="${gItem.id}">
+            <img 
+              id="g_prev_${gItem.id}" 
+              src="${gItem.src}" 
+              class="admin-gallery-item-preview" 
+              style="object-position: ${gItem.position || 'center 30%'};" 
+              alt="Clienta"
+            >
+
+            <div class="admin-gallery-item-fields">
+              <div style="display: flex; gap: 8px;">
+                <input 
+                  type="text" 
+                  class="admin-gallery-item-title-input" 
+                  value="${this.escapeHtml(gItem.title || `Clienta 0${idx + 1}`)}" 
+                  placeholder="Etiqueta (ej: Clienta 1 · Ojos Almendrados)"
+                  onchange="window.adminApp.handleGalleryItemTitleChange('${gItem.id}', this.value)"
+                >
+              </div>
+
+              <div class="admin-gallery-item-sliders">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 10px; color: var(--admin-text-muted);">X:</span>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value="${posX}" 
+                    class="admin-range-slider"
+                    oninput="window.adminApp.handleGalleryItemSlider('${gItem.id}', 'x', this.value)"
+                  >
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 10px; color: var(--admin-text-muted);">Y:</span>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value="${posY}" 
+                    class="admin-range-slider"
+                    oninput="window.adminApp.handleGalleryItemSlider('${gItem.id}', 'y', this.value)"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              class="admin-gallery-item-delete-btn" 
+              title="Eliminar esta foto de clienta"
+              onclick="window.adminApp.deleteGalleryItem('${gItem.id}')"
+            >
+              🗑️
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    handleGalleryItemSlider(gId, axis, val) {
+      const item = this.currentEditingServiceGallery.find(g => g.id === gId);
+      const img = document.getElementById(`g_prev_${gId}`);
+      if (!item) return;
+
+      const currentPos = (item.position || "50% 30%").split(" ");
+      let x = currentPos[0] || "50%";
+      let y = currentPos[1] || "30%";
+
+      if (axis === "x") x = `${val}%`;
+      if (axis === "y") y = `${val}%`;
+
+      item.position = `${x} ${y}`;
+      if (img) img.style.objectPosition = item.position;
+    }
+
+    handleGalleryItemTitleChange(gId, val) {
+      const item = this.currentEditingServiceGallery.find(g => g.id === gId);
+      if (item) item.title = val.trim();
+    }
+
+    deleteGalleryItem(gId) {
+      this.currentEditingServiceGallery = this.currentEditingServiceGallery.filter(g => g.id !== gId);
+      this.renderServiceModalGallery();
+    }
+
     async handleSaveService(e) {
       e.preventDefault();
       const serviceId = this.serviceFormId.value;
       const name = this.srvName.value.trim();
       const categoryId = this.srvCategory.value;
-      const type = this.srvType.value.trim();
+      const subtitle = this.srvType.value.trim();
       const price = parseInt(this.srvPrice.value, 10) || 0;
       const duration = this.srvDuration.value.trim();
+      const appointmentTime = this.srvAppointmentTime.value.trim();
+      const retouch15_21 = this.srvRetouch15_21.value ? parseInt(this.srvRetouch15_21.value, 10) : null;
+      const retouch18_21 = this.srvRetouch18_21.value ? parseInt(this.srvRetouch18_21.value, 10) : null;
       const badge = this.srvBadge.value.trim();
       const desc = this.srvDesc.value.trim();
       const tags = this.srvTags.value.split(",").map(t => t.trim()).filter(Boolean);
       const imagePosition = `${this.srvSliderX.value}% ${this.srvSliderY.value}%`;
       const image = this.currentServiceBase64 || "assets/img/page_img_1.jpeg";
+      const gallery = this.currentEditingServiceGallery || [];
 
       this.saveServiceBtn.disabled = true;
       this.saveServiceBtn.textContent = "Guardando en la Nube...";
@@ -989,14 +1173,19 @@
           if (srv) {
             srv.name = name;
             srv.categoryId = categoryId;
-            srv.type = type;
+            srv.subtitle = subtitle;
+            srv.type = subtitle;
             srv.price = price;
             srv.duration = duration;
+            srv.appointmentTime = appointmentTime;
+            if (retouch15_21) srv.retouch15_21 = retouch15_21;
+            if (retouch18_21) srv.retouch18_21 = retouch18_21;
             srv.badge = badge;
             srv.desc = desc;
             srv.tags = tags;
             srv.image = image;
             srv.imagePosition = imagePosition;
+            srv.gallery = gallery;
           }
         } else {
           // Crear nuevo
@@ -1005,14 +1194,19 @@
             id: newId,
             categoryId,
             name,
-            type,
+            subtitle,
+            type: subtitle,
             price,
             duration,
+            appointmentTime,
+            retouch15_21,
+            retouch18_21,
             badge,
             desc,
             tags,
             image,
-            imagePosition
+            imagePosition,
+            gallery
           };
           this.state.data.services.push(newService);
         }
@@ -1020,7 +1214,7 @@
         await this.state.saveToCloud(this.state.data);
         this.closeServiceModal();
         this.renderServicesList();
-        alert("¡Servicio guardado exitosamente en Firestore!");
+        this.showToast("✓ Servicio y fotos de clientas guardados en Firestore", "success");
       } catch (err) {
         alert("Error al guardar: " + err.message);
       } finally {
@@ -1036,6 +1230,7 @@
       try {
         await this.state.saveToCloud(this.state.data);
         this.renderServicesList();
+        this.showToast("✓ Servicio eliminado del catálogo", "success");
       } catch (err) {
         alert("Error al eliminar: " + err.message);
       }
@@ -1050,7 +1245,9 @@
       if (data.hero) {
         if (document.getElementById("heroFormBadge")) document.getElementById("heroFormBadge").value = data.hero.badge || "";
         if (document.getElementById("heroFormTitle")) document.getElementById("heroFormTitle").value = data.hero.title || "";
+        if (document.getElementById("heroFormSubtitle")) document.getElementById("heroFormSubtitle").value = data.hero.subtitle || "";
         if (document.getElementById("heroFormWelcomeLead")) document.getElementById("heroFormWelcomeLead").value = data.hero.welcomeLead || "";
+        if (document.getElementById("heroFormWelcomeText")) document.getElementById("heroFormWelcomeText").value = data.hero.welcomeText || (data.studio ? data.studio.welcomeText : "") || "";
       }
 
       // Combo Banner
@@ -1077,8 +1274,10 @@
       // Studio
       if (data.studio) {
         if (document.getElementById("studioFormName")) document.getElementById("studioFormName").value = data.studio.name || "";
+        if (document.getElementById("studioFormSlogan")) document.getElementById("studioFormSlogan").value = data.studio.slogan || "";
         if (document.getElementById("studioFormLocation")) document.getElementById("studioFormLocation").value = data.studio.location || "";
         if (document.getElementById("studioFormWhatsapp")) document.getElementById("studioFormWhatsapp").value = data.studio.whatsapp || "";
+        if (document.getElementById("studioFormWhatsappDisplay")) document.getElementById("studioFormWhatsappDisplay").value = data.studio.whatsappDisplay || "";
         if (document.getElementById("studioFormInstagram")) document.getElementById("studioFormInstagram").value = data.studio.instagram || "";
         if (document.getElementById("studioFormTiktok")) document.getElementById("studioFormTiktok").value = data.studio.tiktok || "";
       }
@@ -1086,9 +1285,18 @@
 
     async handleSaveHeroBanner(e) {
       e.preventDefault();
+      if (!this.state.data.hero) this.state.data.hero = {};
+      if (!this.state.data.comboBanner) this.state.data.comboBanner = {};
+
       this.state.data.hero.badge = document.getElementById("heroFormBadge").value;
       this.state.data.hero.title = document.getElementById("heroFormTitle").value;
+      this.state.data.hero.subtitle = document.getElementById("heroFormSubtitle").value;
       this.state.data.hero.welcomeLead = document.getElementById("heroFormWelcomeLead").value;
+      this.state.data.hero.welcomeText = document.getElementById("heroFormWelcomeText").value;
+      if (this.state.data.studio) {
+        this.state.data.studio.welcomeLead = this.state.data.hero.welcomeLead;
+        this.state.data.studio.welcomeText = this.state.data.hero.welcomeText;
+      }
 
       this.state.data.comboBanner.title = document.getElementById("comboFormTitle").value;
       this.state.data.comboBanner.desc = document.getElementById("comboFormDesc").value;
@@ -1098,7 +1306,7 @@
 
       try {
         await this.state.saveToCloud(this.state.data);
-        alert("¡Portada y Banners guardados exitosamente en Firestore!");
+        this.showToast("✓ Portada y Banners guardados exitosamente en Firestore", "success");
       } catch (err) {
         alert("Error al guardar: " + err.message);
       }
@@ -1116,7 +1324,7 @@
 
       try {
         await this.state.saveToCloud(this.state.data);
-        alert("¡Políticas de Retoque guardadas exitosamente en Firestore!");
+        this.showToast("✓ Políticas de Retoque guardadas exitosamente en Firestore", "success");
       } catch (err) {
         alert("Error al guardar: " + err.message);
       }
@@ -1124,36 +1332,79 @@
 
     async handleSaveStudio(e) {
       e.preventDefault();
+      if (!this.state.data.studio) this.state.data.studio = {};
+
       this.state.data.studio.name = document.getElementById("studioFormName").value;
+      this.state.data.studio.slogan = document.getElementById("studioFormSlogan").value;
       this.state.data.studio.location = document.getElementById("studioFormLocation").value;
       this.state.data.studio.whatsapp = document.getElementById("studioFormWhatsapp").value;
+      this.state.data.studio.whatsappDisplay = document.getElementById("studioFormWhatsappDisplay").value;
       this.state.data.studio.instagram = document.getElementById("studioFormInstagram").value;
       this.state.data.studio.tiktok = document.getElementById("studioFormTiktok").value;
 
       try {
         await this.state.saveToCloud(this.state.data);
-        alert("¡Información de Estudio & Redes guardada en Firestore!");
+        this.showToast("✓ Información de Estudio & Redes guardada en Firestore", "success");
       } catch (err) {
         alert("Error al guardar: " + err.message);
       }
     }
 
-    // ================= 5. CLOUD SYNC =================
+    // ================= 5. CLOUD SYNC & BACKUPS =================
     async handlePushAllToCloud() {
-      if (!confirm("¿Deseas subir todo el catálogo actual (fotos, servicios, precios y textos) a la base de datos de Firebase Firestore?")) return;
+      if (!confirm("¿Deseas subir todo el catálogo actual a la base de datos de Firebase Firestore?")) return;
 
       this.btnPushAllToCloud.disabled = true;
       this.btnPushAllToCloud.textContent = "Subiendo a Firestore...";
 
       try {
         await this.state.saveToCloud(this.state.data);
-        alert("¡Catálogo completo sincronizado con éxito en la nube de Firebase!");
+        this.showToast("🚀 ¡Catálogo completo sincronizado con éxito en la nube!", "success");
       } catch (err) {
         alert("Error al subir a Firestore: " + err.message);
       } finally {
         this.btnPushAllToCloud.disabled = false;
-        this.btnPushAllToCloud.textContent = "🚀 Subir Catálogo Completo a la Nube";
+        this.btnPushAllToCloud.textContent = "🚀 Subir Catálogo Completo a Firestore";
       }
+    }
+
+    handleDownloadBackupJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state.data, null, 2));
+      const downloadAnchor = document.createElement("a");
+      const filename = `danna_mesa_catalog_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      this.showToast("✓ Copia de seguridad JSON descargada", "success");
+    }
+
+    handleRestoreJsonFileSelected(e) {
+      if (!e.target.files || !e.target.files[0]) return;
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (!parsed || typeof parsed !== "object" || !parsed.services) {
+            throw new Error("El archivo no tiene la estructura de catálogo válida.");
+          }
+
+          if (confirm("¿Deseas restaurar esta copia de seguridad y reemplazar la configuración actual?")) {
+            this.state.data = parsed;
+            await this.state.saveToCloud(this.state.data);
+            this.populateFormsFromState();
+            this.renderMasterPhotos();
+            this.renderServicesList();
+            this.showToast("✨ ¡Copia de seguridad restaurada con éxito en la nube!", "success");
+          }
+        } catch (err) {
+          alert("Error al leer el archivo JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
     }
 
     async handleResetAllDefaults() {
@@ -1165,13 +1416,30 @@
         this.populateFormsFromState();
         this.renderMasterPhotos();
         this.renderServicesList();
-        alert("¡Valores originales restablecidos y sincronizados en la nube!");
+        this.showToast("✓ Valores originales restablecidos y sincronizados en la nube", "success");
       } catch (err) {
         alert("Error al restablecer: " + err.message);
       }
     }
 
     // ================= UTILITIES =================
+    showToast(message, type = "success") {
+      const container = document.getElementById("adminToastContainer");
+      if (!container) return;
+
+      const toast = document.createElement("div");
+      toast.className = `admin-toast ${type}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : '⚠️'}</span> <span>${this.escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(10px)";
+        toast.style.transition = "all 0.3s ease";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
     compressImage(file, maxDim, quality, callback) {
       if (!file.type.startsWith("image/")) {
         alert("Por favor selecciona un archivo de imagen.");
