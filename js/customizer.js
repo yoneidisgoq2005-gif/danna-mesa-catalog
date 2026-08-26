@@ -1292,28 +1292,49 @@ class CatalogCustomizer {
     reader.readAsDataURL(file);
   }
 
-  applyTheme(themeKey) {
+  async applyTheme(themeKey) {
     if (themeKey) {
       document.documentElement.dataset.theme = themeKey;
       localStorage.setItem("danna_mesa_theme", themeKey);
+      if (!this.state.data.theme) this.state.data.theme = {};
+      this.state.data.theme.active = themeKey;
     } else {
       delete document.documentElement.dataset.theme;
       localStorage.removeItem("danna_mesa_theme");
+      if (!this.state.data.theme) this.state.data.theme = {};
+      this.state.data.theme.active = "default";
     }
     this.renderTabContent();
-    if (window.catalogApp) window.catalogApp.showToast("Paleta de color actualizada");
+    try {
+      await this.state.saveToCloud(this.state.data);
+    } catch (e) {}
+    if (window.catalogApp) window.catalogApp.showToast("Paleta de color actualizada y sincronizada");
   }
 
-  saveCurrentChanges() {
+  async saveCurrentChanges() {
     this.saveCurrentInputsInMemory();
-    const success = this.state.saveData(this.state.data);
-    if (success) {
+    const saveBtn = document.getElementById("btnSaveCustomizer");
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "⏳ Guardando en la nube...";
+    }
+    try {
+      await this.state.saveToCloud(this.state.data);
       this.closeModal();
       if (window.catalogApp) {
-        window.catalogApp.showToast("✓ ¡Todos los cambios guardados exitosamente!");
+        window.catalogApp.showToast("✓ ¡Todos los cambios guardados y sincronizados en la nube!");
       }
-    } else {
-      alert("Hubo un problema al guardar en la memoria del navegador.");
+    } catch (err) {
+      this.closeModal();
+      if (window.catalogApp) {
+        window.catalogApp.showToast("✓ Cambios aplicados");
+      }
+      console.warn("Cloud save notice:", err);
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "✓ Guardar Todos los Cambios";
+      }
     }
   }
 

@@ -83,7 +83,7 @@ class CatalogApp {
       });
     }
 
-    // Navegación con Flechas y Barra Deslizadora de Categorías
+    // Navegación con Flechas y Barra Deslizadora de Categorías (Efecto Carrusel Interactivo)
     const navScroll = document.getElementById("categoryNavScroll");
     const prevBtn = document.getElementById("catNavPrevBtn");
     const nextBtn = document.getElementById("catNavNextBtn");
@@ -91,11 +91,36 @@ class CatalogApp {
 
     if (navScroll && prevBtn && nextBtn) {
       prevBtn.addEventListener("click", () => {
-        navScroll.scrollBy({ left: -220, behavior: "smooth" });
+        navScroll.scrollBy({ left: -260, behavior: "smooth" });
       });
 
       nextBtn.addEventListener("click", () => {
-        navScroll.scrollBy({ left: 220, behavior: "smooth" });
+        navScroll.scrollBy({ left: 260, behavior: "smooth" });
+      });
+
+      // Arrastre con ratón (Mouse Drag & Touch Swipe) estilo carrusel interactivo
+      let isDown = false;
+      let startX;
+      let scrollLeftPos;
+
+      navScroll.addEventListener("mousedown", (e) => {
+        isDown = true;
+        navScroll.classList.add("dragging");
+        startX = e.pageX - navScroll.offsetLeft;
+        scrollLeftPos = navScroll.scrollLeft;
+      });
+
+      window.addEventListener("mouseup", () => {
+        isDown = false;
+        navScroll.classList.remove("dragging");
+      });
+
+      navScroll.addEventListener("mousemove", (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - navScroll.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        navScroll.scrollLeft = scrollLeftPos - walk;
       });
 
       // Sincronizar el slider al hacer scroll en las pestañas
@@ -114,7 +139,7 @@ class CatalogApp {
         });
       }
 
-      // Scroll horizontal con la rueda del ratón
+      // Scroll horizontal suave con la rueda del ratón
       navScroll.addEventListener("wheel", (e) => {
         if (e.deltaY !== 0) {
           e.preventDefault();
@@ -253,6 +278,7 @@ class CatalogApp {
         this.activeSubfilter = "all";
 
         navContainer.querySelectorAll(".cat-tab-btn").forEach(b => b.classList.toggle("active", b.dataset.cat === targetCat));
+        btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         this.renderSubfilters();
         this.renderServices();
       });
@@ -714,6 +740,7 @@ class CatalogApp {
     }
 
     this.updateCartUI();
+    this.renderCartModalContent();
   }
 
   removeService(serviceId) {
@@ -748,23 +775,30 @@ class CatalogApp {
 
     // Detectar Reglas de Descuento / Experiencias automáticas:
     const hasExtension = services.some(s => s.categoryId === "extensiones");
-    const hasHenna = services.some(s => s.id === "cejas-henna");
-    const hasLaminado = services.some(s => s.id === "cejas-laminado-pro" || s.id === "cejas-laminado-premium");
-    const hasHydralips = services.some(s => s.id === "hydralips-sesion");
+    const hasLifting = services.some(s => s.id === "lifting-coreano" || s.categoryId === "lifting");
+    const hasHenna = services.some(s => s.id === "cejas-diseno-henna" || s.id === "cejas-henna" || (s.name && s.name.toLowerCase().includes("henna")));
+    const hasLaminado = services.some(s => s.id === "cejas-laminado-hd" || s.id.includes("laminado") || (s.name && s.name.toLowerCase().includes("laminado")));
+    const hasHydralips = services.some(s => s.id === "hydralips-sesion" || s.categoryId === "hydralips" || (s.name && s.name.toLowerCase().includes("hydralips")));
 
-    // 1. Experiencia Mirada Perfecta (Extensiones + Henna -> Descuento 10k)
+    // 1. Experiencia Mirada Perfecta (Extensiones + Henna -> Descuento $10.000 COP)
     if (hasExtension && hasHenna && !services.some(s => s.id === "exp-mirada-perfecta")) {
       totalDiscount += 10000;
       appliedCombos.push("Experiencia Mirada Perfecta (-$10.000 COP)");
     }
 
-    // 2. Experiencia Glow Lips (Extensiones + HydraLips -> Descuento 10k)
+    // 2. Ritual Glow (Lifting + Laminado -> Descuento $15.000 COP)
+    if (hasLifting && hasLaminado && !services.some(s => s.id === "exp-ritual-glow")) {
+      totalDiscount += 15000;
+      appliedCombos.push("Ritual Glow: Lifting + Laminado (-$15.000 COP)");
+    }
+
+    // 3. Experiencia Glow Lips (Extensiones + HydraLips -> Descuento $10.000 COP)
     if (hasExtension && hasHydralips && !services.some(s => s.id === "exp-glow-lips")) {
       totalDiscount += 10000;
       appliedCombos.push("Experiencia Glow Lips (-$10.000 COP)");
     }
 
-    // 3. Experiencia Esencia Sublime (Extensiones + Laminado -> Regalo Hidratante)
+    // 4. Experiencia Esencia Sublime (Extensiones + Laminado -> Regalo Hidratante)
     if (hasExtension && hasLaminado && !services.some(s => s.id === "exp-esencia-sublime")) {
       appliedCombos.push("Experiencia Esencia Sublime (¡Hidratante de regalo incluido!)");
     }

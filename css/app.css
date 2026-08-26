@@ -347,12 +347,23 @@ button, .btn, .btn-add-cart, .cat-tab-btn, .subfilter-chip, .gallery-thumb-btn, 
 
 .category-nav-scroll {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
-  padding: 4px 0;
+  padding: 6px 12px;
   scrollbar-width: none;
   scroll-behavior: smooth;
   flex: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+}
+
+.category-nav-scroll.dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
 }
 
 .category-nav-scroll::-webkit-scrollbar {
@@ -424,6 +435,8 @@ button, .btn, .btn-add-cart, .cat-tab-btn, .subfilter-chip, .gallery-thumb-btn, 
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
+  scroll-snap-align: center;
+  flex-shrink: 0;
   transition: all var(--transition-fast);
 }
 
