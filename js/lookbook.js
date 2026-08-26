@@ -10,6 +10,7 @@
 
 class LookbookManager {
   constructor() {
+    window.lookbookManager = this;
     this.state = window.catalogState;
     this.container = document.getElementById("lookbookStageContainer");
     this.isRendered = false;
@@ -23,15 +24,15 @@ class LookbookManager {
       { key: "p5_lifting_service", label: "05 · Lifting Coreano", type: "service", serviceId: "lifting-coreano" },
       { key: "p6_lifting_evidence", label: "06 · Galería Resultados Lifting", type: "evidence", serviceId: "lifting-coreano" },
       { key: "p7_ext_divider", label: "07 · Separador Extensiones", type: "divider", divKey: "extensions" },
-      { key: "p8_ext_clasicas_humedo", label: "08 · Clásicas & Efecto Húmedo", type: "two_services", s1: "clasicas-naturales", s2: "efecto-humedo" },
-      { key: "p9_ext_aura_bloom", label: "09 · Efecto Aura & Volumen Bloom", type: "two_services", s1: "efecto-aura", s2: "volumen-bloom" },
-      { key: "p10_ext_egipcio_5d", label: "10 · Efecto Egipcio & Volumen 5D", type: "two_services", s1: "efecto-egipcio", s2: "volumen-5d" },
-      { key: "p11_ext_foxy_wispy", label: "11 · Efecto Foxy & Wispy / Kim K", type: "two_services", s1: "efecto-foxy", s2: "efecto-wispy" },
-      { key: "p12_ext_bratz_sirena", label: "12 · Efecto Bratz & Efecto Sirena", type: "two_services", s1: "efecto-bratz", s2: "efecto-sirena" },
-      { key: "p13_ext_cateyes", label: "13 · Cat Eyes / Ojo de Gato", type: "service", serviceId: "efecto-cateyes" },
+      { key: "p8_ext_clasicas_humedo", label: "08 · Clásicas & Efecto Húmedo", type: "two_services", s1: "ext-clasicas-naturales", s2: "ext-efecto-humedo" },
+      { key: "p9_ext_aura_bloom", label: "09 · Efecto Aura & Volumen Bloom", type: "two_services", s1: "ext-efecto-aura", s2: "ext-volumen-bloom" },
+      { key: "p10_ext_egipcio_5d", label: "10 · Volumen Egipcio & 5D Glam", type: "two_services", s1: "ext-volumen-egipcio", s2: "ext-volumen-5d" },
+      { key: "p11_ext_foxy_wispy", label: "11 · Efecto Foxy & Wispy / Kim K", type: "two_services", s1: "ext-efecto-foxy", s2: "ext-efecto-wispy" },
+      { key: "p12_ext_bratz_sirena", label: "12 · Efecto Bratz & Efecto Sirena", type: "two_services", s1: "ext-efecto-bratz", s2: "ext-efecto-sirena" },
+      { key: "p13_ext_cateyes", label: "13 · Cat Eyes / Ojo de Gato", type: "service", serviceId: "ext-efecto-cateyes" },
       { key: "p14_policies", label: "14 · Políticas de Retoque", type: "policies" },
       { key: "p15_cejas_divider", label: "15 · Separador Cejas", type: "divider", divKey: "cejas" },
-      { key: "p16_cejas_services", label: "16 · Diseño & Laminado de Cejas", type: "two_services", s1: "diseno-henna", s2: "laminado-cejas" },
+      { key: "p16_cejas_services", label: "16 · Diseño & Laminado de Cejas", type: "two_services", s1: "cejas-diseno-henna", s2: "cejas-laminado-hd" },
       { key: "p17_lips_divider", label: "17 · Separador HydraLips", type: "divider", divKey: "hydralips" },
       { key: "p18_hydralips_service", label: "18 · HydraLips Hidratación", type: "service", serviceId: "hydralips-sesion" },
       { key: "p19_combos", label: "19 · Experiencias & Rituales", type: "combos" },
@@ -146,7 +147,7 @@ class LookbookManager {
     let pageCounter = 1;
 
     // Helper badge
-    const editBadge = (key) => admin ? `<button type="button" class="lb-page-edit-badge" onclick="window.lookbookManager.openPageEditor('${key}')">✏️ Editar</button>` : "";
+    const editBadge = (key) => admin ? `<button type="button" class="lb-page-edit-badge" onclick="event.stopPropagation(); window.lookbookManager.openPageEditor('${key}')">✏️ Editar</button>` : "";
 
     // ================= PÁGINA 1: PORTADA =================
     const heroImg = (data.hero && data.hero.image) ? data.hero.image : "assets/img/page_img_1.jpeg";
@@ -573,7 +574,7 @@ class LookbookManager {
   renderTwoServicesPage(pageNum, topTitle, mainTitle, introDesc, s1, s2, pageKey, isAdmin) {
     if (!s1) return "";
     const pStr = pageNum < 10 ? `0${pageNum}` : `${pageNum}`;
-    const editBadge = isAdmin ? `<button type="button" class="lb-page-edit-badge" onclick="window.lookbookManager.openPageEditor('${pageKey}')">✏️ Editar</button>` : "";
+    const editBadge = isAdmin ? `<button type="button" class="lb-page-edit-badge" onclick="event.stopPropagation(); window.lookbookManager.openPageEditor('${pageKey}')">✏️ Editar</button>` : "";
 
     return `
       <section class="lb-page" id="lb-page-${pageNum}">
@@ -749,12 +750,19 @@ class LookbookManager {
     }
 
     dynamicFields.innerHTML = fieldsHtml;
+    this.initAdminControls();
+    modal.style.display = "flex";
     modal.classList.add("active");
+    modal.classList.add("open");
   }
 
   closePageEditor() {
     const modal = document.getElementById("lookbookPageModal");
-    if (modal) modal.classList.remove("active");
+    if (modal) {
+      modal.classList.remove("active");
+      modal.classList.remove("open");
+      modal.style.display = "none";
+    }
     this.activeEditPageKey = null;
     this.currentBase64Upload = null;
   }

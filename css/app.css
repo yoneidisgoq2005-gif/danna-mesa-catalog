@@ -1175,7 +1175,8 @@ button, .btn, .btn-add-cart, .cat-tab-btn, .subfilter-chip, .gallery-thumb-btn, 
   transition: opacity var(--transition-fast);
 }
 
-.modal-overlay.open {
+.modal-overlay.open,
+.modal-overlay.active {
   opacity: 1;
   pointer-events: auto;
 }
@@ -1195,8 +1196,23 @@ button, .btn, .btn-add-cart, .cat-tab-btn, .subfilter-chip, .gallery-thumb-btn, 
   overflow: hidden;
 }
 
-.modal-overlay.open .drawer-modal-content {
+.modal-overlay.open .drawer-modal-content,
+.modal-overlay.active .drawer-modal-content {
   transform: translateY(0);
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+  }
+  .drawer-modal-content {
+    border-radius: var(--radius-lg);
+    transform: scale(0.95);
+  }
+  .modal-overlay.open .drawer-modal-content,
+  .modal-overlay.active .drawer-modal-content {
+    transform: scale(1);
+  }
 }
 
 .drawer-header {
