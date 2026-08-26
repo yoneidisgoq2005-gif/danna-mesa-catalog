@@ -21,6 +21,7 @@ class CatalogApp {
     this.renderCategoryTabs();
     this.renderServices();
     this.initBeforeAfterSliders();
+    this.initFaqAccordion();
     this.updateCartUI();
 
     // Escuchar cambios de datos (desde el Customizer)
@@ -677,6 +678,21 @@ class CatalogApp {
     });
   }
 
+  initFaqAccordion() {
+    const faqContainer = document.getElementById("faqAccordion");
+    if (!faqContainer) return;
+    faqContainer.querySelectorAll(".faq-item").forEach(item => {
+      const btn = item.querySelector(".faq-question-btn");
+      if (btn) {
+        btn.addEventListener("click", () => {
+          const isOpen = item.classList.contains("active");
+          faqContainer.querySelectorAll(".faq-item").forEach(i => i.classList.remove("active"));
+          if (!isOpen) item.classList.add("active");
+        });
+      }
+    });
+  }
+
   toggleServiceSelection(serviceId) {
     const isSelected = !this.selectedServices.has(serviceId);
     if (isSelected) {
@@ -864,6 +880,18 @@ class CatalogApp {
       `;
     } else {
       discountBox.style.display = "none";
+    }
+
+    // Sugerencia inteligente de Combo / Upsell
+    const upsellBox = document.getElementById("cartUpsellBox");
+    if (upsellBox) {
+      const hasExtensionOrLifting = summary.services.some(s => s.categoryId === "extensiones" || s.categoryId === "lifting");
+      const hasHenna = summary.services.some(s => s.id === "cejas-diseno-henna" || s.id === "cejas-henna");
+      if (summary.count === 1 && hasExtensionOrLifting && !hasHenna) {
+        upsellBox.style.display = "flex";
+      } else {
+        upsellBox.style.display = "none";
+      }
     }
 
     if (drawerSubtotal) drawerSubtotal.textContent = summary.subtotal > 0 ? this.state.formatMoney(summary.subtotal) : 'Según pestañas elegidas';
