@@ -48,9 +48,10 @@ class CatalogCustomizer {
           <button class="subfilter-chip" data-custab="policies" id="cusTabPolicies">📜 Políticas de Retoque</button>
           <button class="subfilter-chip" data-custab="studio" id="cusTabStudio">🏢 Estudio & Redes</button>
           <button class="subfilter-chip" data-custab="prices" id="cusTabPrices">💰 Tabla de Precios</button>
+          <button class="subfilter-chip" data-custab="lookbook" id="cusTabLookbook">📖 Textos Revista</button>
           <button class="subfilter-chip" data-custab="theme" id="cusTabTheme">🎨 Colores & Tema</button>
           <button class="subfilter-chip" data-custab="backup" id="cusTabBackup">💾 Respaldo JSON</button>
-          <a href="admin.html" target="_blank" class="subfilter-chip" style="text-decoration: none; color: var(--color-primary); font-weight: 700;">💬 Testimonios (Firebase) ➔</a>
+          <a href="admin.html" target="_blank" class="subfilter-chip" style="text-decoration: none; color: var(--color-primary); font-weight: 700;">💬 Panel Admin Completo (Firebase) ➔</a>
         </div>
 
         <div class="drawer-body" id="customizerBodyContainer" style="padding: 24px; overflow-y: auto;">
@@ -409,6 +410,34 @@ class CatalogCustomizer {
           s.price = input.value.trim() === "" ? null : (parseInt(input.value, 10) || 0);
         }
       });
+    }
+
+    // Lookbook
+    if (this.activeTab === "lookbook") {
+      if (!data.lookbook) data.lookbook = {};
+      const cTitle = document.getElementById("custLbCoverTitle");
+      const cSub = document.getElementById("custLbCoverSubtitle");
+      const cYear = document.getElementById("custLbCoverYear");
+      const wLead = document.getElementById("custLbWelcomeLead");
+      const wText = document.getElementById("custLbWelcomeText");
+      const lTitle = document.getElementById("custLbLiftingTitle");
+      const lQuote = document.getElementById("custLbLiftingQuote");
+      const eTitle = document.getElementById("custLbExtTitle");
+      const eQuote = document.getElementById("custLbExtQuote");
+      const cjTitle = document.getElementById("custLbCejasTitle");
+      const cjQuote = document.getElementById("custLbCejasQuote");
+
+      if (cTitle) data.lookbook.coverTitle = cTitle.value.trim();
+      if (cSub) data.lookbook.coverSubtitle = cSub.value.trim();
+      if (cYear) data.lookbook.coverYear = cYear.value.trim();
+      if (wLead) data.lookbook.welcomeLead = wLead.value.trim();
+      if (wText) data.lookbook.welcomeText = wText.value.trim();
+      if (lTitle) data.lookbook.liftingDividerTitle = lTitle.value.trim();
+      if (lQuote) data.lookbook.liftingDividerQuote = lQuote.value.trim();
+      if (eTitle) data.lookbook.extensionsDividerTitle = eTitle.value.trim();
+      if (eQuote) data.lookbook.extensionsDividerQuote = eQuote.value.trim();
+      if (cjTitle) data.lookbook.cejasDividerTitle = cjTitle.value.trim();
+      if (cjQuote) data.lookbook.cejasDividerQuote = cjQuote.value.trim();
     }
   }
 
@@ -1059,7 +1088,59 @@ class CatalogCustomizer {
       `;
 
     // =========================================================================
-    // 8. PESTAÑA: RESPALDO JSON
+    // 8. PESTAÑA: REVISTA (LOOKBOOK)
+    // =========================================================================
+    } else if (this.activeTab === "lookbook") {
+      const lb = data.lookbook || DEFAULT_CATALOG_DATA.lookbook || {};
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: var(--color-paper-alt); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--color-hairline);">
+            <h3 style="font-size: 14px; color: var(--color-primary); margin-bottom: 10px;">🌟 Portada & Bienvenida de la Revista</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Título Portada</label>
+                <input type="text" id="custLbCoverTitle" value="${lb.coverTitle || (data.studio ? data.studio.name : '')}" style="width: 100%; padding: 6px 10px; border: 1px solid var(--color-hairline); border-radius: 4px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Subtítulo</label>
+                <input type="text" id="custLbCoverSubtitle" value="${lb.coverSubtitle || 'Catálogo Colección 2026'}" style="width: 100%; padding: 6px 10px; border: 1px solid var(--color-hairline); border-radius: 4px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Año</label>
+                <input type="text" id="custLbCoverYear" value="${lb.coverYear || '2026'}" style="width: 100%; padding: 6px 10px; border: 1px solid var(--color-hairline); border-radius: 4px;">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Manifiesto de Bienvenida (Pág. 2)</label>
+              <textarea id="custLbWelcomeLead" rows="2" style="width: 100%; padding: 6px 10px; border: 1px solid var(--color-hairline); border-radius: 4px; font-family: inherit;">${lb.welcomeLead || (data.studio ? data.studio.welcomeLead : '')}</textarea>
+            </div>
+            <div>
+              <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Mensaje de Confianza</label>
+              <textarea id="custLbWelcomeText" rows="2" style="width: 100%; padding: 6px 10px; border: 1px solid var(--color-hairline); border-radius: 4px; font-family: inherit;">${lb.welcomeText || (data.studio ? data.studio.welcomeText : '')}</textarea>
+            </div>
+          </div>
+
+          <div style="background: var(--color-paper-alt); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--color-hairline);">
+            <h3 style="font-size: 14px; color: var(--color-primary); margin-bottom: 10px;">📑 Separadores Editoriales (Dividers)</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <div><label style="font-size: 10px; font-weight: 700;">Título Lifting</label><input type="text" id="custLbLiftingTitle" value="${lb.liftingDividerTitle || 'Lifting'}" style="width:100%; padding:6px 10px; border:1px solid var(--color-hairline); border-radius:4px;"></div>
+              <div><label style="font-size: 10px; font-weight: 700;">Frase Lifting</label><input type="text" id="custLbLiftingQuote" value="${lb.liftingDividerQuote || 'El servicio insignia'}" style="width:100%; padding:6px 10px; border:1px solid var(--color-hairline); border-radius:4px;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <div><label style="font-size: 10px; font-weight: 700;">Título Extensiones</label><input type="text" id="custLbExtTitle" value="${lb.extensionsDividerTitle || 'Extensiones'}" style="width:100%; padding:6px 10px; border:1px solid var(--color-hairline); border-radius:4px;"></div>
+              <div><label style="font-size: 10px; font-weight: 700;">Frase Extensiones</label><input type="text" id="custLbExtQuote" value="${lb.extensionsDividerQuote || 'La mirada que siempre imaginaste.'}" style="width:100%; padding:6px 10px; border:1px solid var(--color-hairline); border-radius:4px;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div><label style="font-size: 10px; font-weight: 700;">Título Cejas</label><input type="text" id="custLbCejasTitle" value="${lb.cejasDividerTitle || 'Cejas'}" style="width:100%; padding:6px 10px; border:1px solid var(--color-hairline); border-radius:4px;"></div>
+              <div><label style="font-size: 10px; font-weight: 700;">Frase Cejas</label><input type="text" id="custLbCejasQuote" value="${lb.cejasDividerQuote || 'Un diseño pensado para tu rostro.'}" style="width:100%; padding:6px 10px; border:1px solid var(--color-hairline); border-radius:4px;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+    // =========================================================================
+    // 9. PESTAÑA: RESPALDO JSON
     // =========================================================================
     } else if (this.activeTab === "backup") {
       container.innerHTML = `
