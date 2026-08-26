@@ -1,6 +1,6 @@
 /* ==========================================================================
    DANNA MESA STUDIO — SECCIÓN DE TESTIMONIOS: "LO DICEN ELLAS"
-   Carrusel Editorial Interactivo de Lujo con Animaciones Fluidas & Gestos Táctiles
+   Carrusel Continuo Infinito (Marquee de Lujo), Interactivo y Pausable
    ========================================================================== */
 
 .testimonials-section {
@@ -15,7 +15,7 @@
 /* Encabezado Editorial */
 .testimonials-header {
   text-align: center;
-  max-width: 680px;
+  max-width: 700px;
   margin: 0 auto 36px;
   padding: 0 16px;
 }
@@ -53,21 +53,39 @@
   margin: 0;
 }
 
-/* ================= CONTENEDOR DEL CARRUSEL ================= */
+/* Indicación de interactividad */
+.testimonials-hint-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--color-muted);
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--color-hairline);
+}
+
+/* ================= CONTENEDOR DEL CARRUSEL CONTINUO ================= */
 .testimonials-carousel-wrapper {
   position: relative;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px 0;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding: 15px 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
+  /* Máscara de desvanecimiento en los bordes para elegancia editorial */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
 }
 
 .testimonials-carousel-track-container {
   overflow: hidden;
   width: 100%;
-  padding: 20px 8px 30px;
+  padding: 20px 0 30px;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -81,22 +99,23 @@
 .testimonials-carousel-track {
   display: flex;
   gap: 24px;
-  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  width: max-content;
   will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 /* ================= TARJETA EDITORIAL DE TESTIMONIO ================= */
 .testimonial-card {
-  flex: 0 0 calc(33.333% - 16px);
-  min-width: 310px;
+  flex: 0 0 340px;
+  width: 340px;
   background: var(--color-paper-card, #ffffff);
   border: 1px solid var(--color-hairline);
   border-radius: 16px;
-  padding: 24px;
+  padding: 22px;
   box-shadow: 0 10px 30px rgba(27, 26, 22, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   position: relative;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
   overflow: hidden;
@@ -109,9 +128,10 @@
 }
 
 .testimonial-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px rgba(184, 148, 95, 0.18);
-  border-color: rgba(184, 148, 95, 0.45);
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 20px 45px rgba(184, 148, 95, 0.2);
+  border-color: rgba(184, 148, 95, 0.5);
+  z-index: 5;
 }
 
 /* Decoración dorada superior */
@@ -123,7 +143,7 @@
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 /* Header de la tarjeta */
@@ -161,20 +181,20 @@
 /* Cita del Testimonio */
 .testimonial-quote {
   font-family: var(--font-serif);
-  font-size: 16.5px;
+  font-size: 16px;
   font-weight: 400;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.45;
   color: var(--color-ink);
   margin: 0;
   position: relative;
-  min-height: 52px;
+  min-height: 48px;
 }
 
 .testimonial-quote::before {
   content: "“";
   font-family: var(--font-serif);
-  font-size: 28px;
+  font-size: 26px;
   line-height: 0;
   position: relative;
   top: 6px;
@@ -186,7 +206,7 @@
 .testimonial-quote::after {
   content: "”";
   font-family: var(--font-serif);
-  font-size: 28px;
+  font-size: 26px;
   line-height: 0;
   position: relative;
   top: 6px;
@@ -213,6 +233,7 @@
   object-position: top center;
   display: block;
   transition: transform 0.45s ease, filter 0.35s ease;
+  pointer-events: none; /* Previene drag fantasma del navegador */
 }
 
 .testimonial-screenshot-wrap:hover .testimonial-screenshot-img {
@@ -292,35 +313,35 @@
   color: var(--color-muted);
 }
 
-/* ================= BOTONES DE NAVEGACIÓN (FLECHAS) ================= */
+/* ================= BOTONES DE NAVEGACIÓN FLOTANTES ================= */
 .carousel-nav-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(184, 148, 95, 0.35);
+  border: 1px solid rgba(184, 148, 95, 0.4);
   color: var(--color-ink);
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 15;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  z-index: 25;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-theme="dark-luxury"] .carousel-nav-btn {
-  background: rgba(32, 30, 25, 0.88);
-  border-color: rgba(184, 148, 95, 0.4);
+  background: rgba(32, 30, 25, 0.9);
+  border-color: rgba(184, 148, 95, 0.45);
   color: #f4f1ea;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
 
 .carousel-nav-btn:hover {
@@ -328,7 +349,7 @@
   color: #ffffff;
   border-color: var(--color-primary);
   transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 10px 30px rgba(184, 148, 95, 0.45);
+  box-shadow: 0 10px 30px rgba(184, 148, 95, 0.5);
 }
 
 .carousel-nav-btn:active {
@@ -336,45 +357,17 @@
 }
 
 .carousel-nav-btn.prev {
-  left: -18px;
+  left: 20px;
 }
 
 .carousel-nav-btn.next {
-  right: -18px;
+  right: 20px;
 }
 
 @media (max-width: 768px) {
   .carousel-nav-btn {
-    display: none; /* En móvil se navega deslizando con el dedo */
+    display: none; /* En móvil se controla directamente con el dedo */
   }
-}
-
-/* ================= INDICADORES (DOTS) ================= */
-.testimonials-dots-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
-
-.carousel-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(184, 148, 95, 0.25);
-  border: 1px solid transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.carousel-dot.active {
-  width: 28px;
-  border-radius: 999px;
-  background: var(--color-primary);
-  box-shadow: 0 0 12px rgba(184, 148, 95, 0.6);
 }
 
 /* ================= CTA POST-TESTIMONIOS ================= */
@@ -529,21 +522,14 @@
 }
 
 /* ================= RESPONSIVE ================= */
-@media (max-width: 1024px) {
-  .testimonial-card {
-    flex: 0 0 calc(50% - 12px);
-    min-width: 280px;
-  }
-}
-
 @media (max-width: 640px) {
   .testimonial-card {
-    flex: 0 0 85vw;
-    min-width: 260px;
+    flex: 0 0 290px;
+    width: 290px;
     padding: 18px;
   }
   
   .testimonial-screenshot-img {
-    height: 180px;
+    height: 175px;
   }
 }

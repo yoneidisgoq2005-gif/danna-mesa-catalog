@@ -1,7 +1,7 @@
 /**
  * ==========================================================================
  * DANNA MESA STUDIO — TESTIMONIOS: "LO DICEN ELLAS"
- * Módulo Público de Carrusel Animado Interactivo & Conexión con Firestore
+ * Carrusel Continuo Infinito (Marquee de Lujo), Interactivo y Pausable
  * ==========================================================================
  */
 
@@ -19,7 +19,7 @@
     measurementId: "G-2M73B5VMMT"
   };
 
-  // Testimonios iniciales reales integrados directamente (fallback inmediato y offline)
+  // Testimonios iniciales reales integrados directamente
   const DEFAULT_TESTIMONIALS = [
     {
       id: "default-1",
@@ -82,6 +82,7 @@
       published: true
     },
     {
+      id: "default-7",
       quote: "Voy súper bien, amé las pestañas.",
       clientName: "Carolina V.",
       service: "Extensiones Clásicas",
@@ -92,16 +93,18 @@
     }
   ];
 
-  class TestimonialsCarouselApp {
+  class ContinuousTestimonialsMarquee {
     constructor() {
       this.testimonials = [...DEFAULT_TESTIMONIALS];
-      this.currentIndex = 0;
-      this.autoPlayInterval = null;
-      this.autoPlayDelay = 4500;
+      this.currentOffset = 0;
+      this.speed = 0.62; // Velocidad continua, constante, fluida y perfectamente legible
+      this.isPaused = false;
       this.isDragging = false;
-      this.startX = 0;
-      this.currentTranslate = 0;
-      this.prevTranslate = 0;
+      this.isHovering = false;
+      this.hasMoved = false;
+      this.dragStartX = 0;
+      this.initialOffset = 0;
+      this.animationFrameId = null;
       this.db = null;
 
       this.initFirebase();
@@ -120,16 +123,16 @@
           this.db = firebase.firestore();
         }
       } catch (err) {
-        console.warn("[Testimonials] Firebase init fallback to local defaults:", err);
+        console.warn("[Testimonials] Firebase init fallback:", err);
       }
     }
 
     initElements() {
-      this.trackEl = document.getElementById("testimonialsGrid");
+      this.wrapperEl = document.getElementById("testimonialsCarouselWrapper");
       this.trackContainer = document.getElementById("carouselTrackContainer");
+      this.trackEl = document.getElementById("testimonialsGrid");
       this.prevBtn = document.getElementById("carouselPrevBtn");
       this.nextBtn = document.getElementById("carouselNextBtn");
-      this.dotsContainer = document.getElementById("testimonialsDotsContainer");
       this.lightboxModal = document.getElementById("testimonialLightboxModal");
       this.lightboxImg = document.getElementById("testimonialLightboxImg");
       this.lightboxCaption = document.getElementById("testimonialLightboxCaption");
@@ -137,21 +140,12 @@
     }
 
     bindEvents() {
-      // Botones de navegación
+      // Botones de flechas para salto manual suave
       if (this.prevBtn) {
-        this.prevBtn.addEventListener("click", () => {
-          this.stopAutoPlay();
-          this.prevSlide();
-          this.startAutoPlay();
-        });
+        this.prevBtn.addEventListener("click", () => this.nudge(-360));
       }
-
       if (this.nextBtn) {
-        this.nextBtn.addEventListener("click", () => {
-          this.stopAutoPlay();
-          this.nextSlide();
-          this.startAutoPlay();
-        });
+        this.nextBtn.addEventListener("click", () => this.nudge(360));
       }
 
       // Lightbox
@@ -169,25 +163,29 @@
         }
       });
 
-      // Pausa de auto-play al posar el cursor o tocar
-      if (this.trackContainer) {
-        this.trackContainer.addEventListener("mouseenter", () => this.stopAutoPlay());
-        this.trackContainer.addEventListener("mouseleave", () => this.startAutoPlay());
-
-        // Gestos táctiles y arrastre con mouse
-        this.trackContainer.addEventListener("touchstart", (e) => this.handleDragStart(e), { passive: true });
-        this.trackContainer.addEventListener("touchmove", (e) => this.handleDragMove(e), { passive: true });
-        this.trackContainer.addEventListener("touchend", () => this.handleDragEnd());
-
-        this.trackContainer.addEventListener("mousedown", (e) => this.handleDragStart(e));
-        window.addEventListener("mousemove", (e) => this.handleDragMove(e));
-        window.addEventListener("mouseup", () => this.handleDragEnd());
+      // Pausa al posar el mouse (Hover)
+      if (this.wrapperEl) {
+        this.wrapperEl.addEventListener("mouseenter", () => {
+          this.isHovering = true;
+          this.isPaused = true;
+        });
+        this.wrapperEl.addEventListener("mouseleave", () => {
+          this.isHovering = false;
+          if (!this.isDragging) this.isPaused = false;
+        });
       }
 
-      // Recalcular en redimensión de ventana
-      window.addEventListener("resize", () => {
-        this.updatePosition(false);
-      });
+      // Control táctil (Touch en móviles/tablets)
+      if (this.trackContainer) {
+        this.trackContainer.addEventListener("touchstart", (e) => this.onDragStart(e), { passive: true });
+        this.trackContainer.addEventListener("touchmove", (e) => this.onDragMove(e), { passive: true });
+        this.trackContainer.addEventListener("touchend", () => this.onDragEnd());
+
+        // Control con mouse (Drag en escritorio)
+        this.trackContainer.addEventListener("mousedown", (e) => this.onDragStart(e));
+        window.addEventListener("mousemove", (e) => this.onDragMove(e));
+        window.addEventListener("mouseup", () => this.onDragEnd());
+      }
     }
 
     async fetchFromFirestore() {
@@ -212,7 +210,6 @@
 
           if (remoteItems.length > 0) {
             this.testimonials = remoteItems;
-            this.currentIndex = 0;
             this.render();
           }
         }
@@ -224,7 +221,10 @@
     render() {
       if (!this.trackEl) return;
 
-      this.trackEl.innerHTML = this.testimonials.map((item) => {
+      // Duplicamos el conjunto de testimonios para que el bucle continuo sea 100% invisible y sin cortes
+      const duplicatedList = [...this.testimonials, ...this.testimonials, ...this.testimonials];
+
+      this.trackEl.innerHTML = duplicatedList.map((item, idx) => {
         const quoteHtml = this.escapeHtml(item.quote);
         const nameHtml = this.escapeHtml(item.clientName || "Clienta Verificada");
         const serviceHtml = this.escapeHtml(item.service || "Servicio Studio");
@@ -232,7 +232,7 @@
         const imgSrc = item.image || item.imageUrl || "assets/img/page_img_1.jpeg";
 
         return `
-          <article class="testimonial-card" data-id="${item.id}">
+          <article class="testimonial-card" data-card-idx="${idx}">
             <div class="testimonial-card-top">
               <span class="testimonial-rating-stars">★★★★★</span>
               <span class="testimonial-badge-verified">✓ Verificado</span>
@@ -246,6 +246,7 @@
                 alt="Mensaje real de clienta sobre ${serviceHtml}" 
                 class="testimonial-screenshot-img" 
                 loading="lazy"
+                draggable="false"
               >
               <div class="testimonial-screenshot-overlay">
                 <span class="testimonial-zoom-pill">
@@ -265,157 +266,114 @@
         `;
       }).join("");
 
-      // Vincular eventos de clic en screenshots para abrir Lightbox
+      // Clics en las capturas para abrir Lightbox (solo si no fue un arrastre de scroll)
       this.trackEl.querySelectorAll(".testimonial-screenshot-wrap").forEach((wrap) => {
-        wrap.addEventListener("click", () => {
+        wrap.addEventListener("click", (e) => {
+          if (this.hasMoved) return; // Evita abrir lightbox si la clienta estaba arrastrando
           const img = wrap.getAttribute("data-img");
           const caption = wrap.getAttribute("data-caption");
           this.openLightbox(img, caption);
         });
       });
 
-      this.renderDots();
-      this.updatePosition(false);
-      this.startAutoPlay();
+      this.startLoop();
     }
 
-    renderDots() {
-      if (!this.dotsContainer) return;
-      const totalSlides = this.testimonials.length;
-
-      this.dotsContainer.innerHTML = Array.from({ length: totalSlides }).map((_, idx) => `
-        <button 
-          class="carousel-dot ${idx === this.currentIndex ? 'active' : ''}" 
-          data-dot-index="${idx}" 
-          aria-label="Ir al testimonio ${idx + 1}"
-        ></button>
-      `).join("");
-
-      this.dotsContainer.querySelectorAll(".carousel-dot").forEach((dot) => {
-        dot.addEventListener("click", () => {
-          this.stopAutoPlay();
-          const targetIdx = parseInt(dot.getAttribute("data-dot-index"), 10);
-          this.goToSlide(targetIdx);
-          this.startAutoPlay();
-        });
-      });
-    }
-
-    getCardsPerView() {
-      const width = window.innerWidth;
-      if (width <= 640) return 1;
-      if (width <= 1024) return 2;
-      return 3;
-    }
-
-    getMaxIndex() {
-      const cardsPerView = this.getCardsPerView();
-      return Math.max(0, this.testimonials.length - cardsPerView);
-    }
-
-    goToSlide(index) {
-      const maxIdx = this.getMaxIndex();
-      if (index < 0) {
-        this.currentIndex = maxIdx;
-      } else if (index > maxIdx) {
-        this.currentIndex = 0;
-      } else {
-        this.currentIndex = index;
+    startLoop() {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
       }
-      this.updatePosition(true);
+
+      const animate = () => {
+        if (!this.isPaused && !this.isDragging) {
+          this.currentOffset += this.speed;
+        }
+
+        // Bucle infinito sin saltos
+        const singleSetWidth = this.trackEl.scrollWidth / 3;
+        if (singleSetWidth > 0) {
+          if (this.currentOffset >= singleSetWidth) {
+            this.currentOffset -= singleSetWidth;
+            if (this.initialOffset) this.initialOffset -= singleSetWidth;
+          } else if (this.currentOffset < 0) {
+            this.currentOffset += singleSetWidth;
+            if (this.initialOffset) this.initialOffset += singleSetWidth;
+          }
+        }
+
+        this.trackEl.style.transform = `translate3d(-${this.currentOffset}px, 0, 0)`;
+        this.animationFrameId = requestAnimationFrame(animate);
+      };
+
+      this.animationFrameId = requestAnimationFrame(animate);
     }
 
-    nextSlide() {
-      const maxIdx = this.getMaxIndex();
-      if (this.currentIndex >= maxIdx) {
-        this.currentIndex = 0;
-      } else {
-        this.currentIndex++;
-      }
-      this.updatePosition(true);
-    }
+    // Nudge de flechas izquierda/derecha
+    nudge(delta) {
+      this.isPaused = true;
+      const targetOffset = this.currentOffset + delta;
+      const startTime = performance.now();
+      const startOffset = this.currentOffset;
+      const duration = 400; // ms
 
-    prevSlide() {
-      const maxIdx = this.getMaxIndex();
-      if (this.currentIndex <= 0) {
-        this.currentIndex = maxIdx;
-      } else {
-        this.currentIndex--;
-      }
-      this.updatePosition(true);
-    }
+      const step = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3); // cubic ease-out
 
-    updatePosition(smooth = true) {
-      if (!this.trackEl) return;
+        this.currentOffset = startOffset + delta * ease;
 
-      const cards = this.trackEl.querySelectorAll(".testimonial-card");
-      if (cards.length === 0) return;
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          setTimeout(() => {
+            if (!this.isHovering && !this.isDragging) {
+              this.isPaused = false;
+            }
+          }, 1200);
+        }
+      };
 
-      const cardWidth = cards[0].offsetWidth;
-      const gap = 24; // Espacio entre tarjetas
-      const offset = this.currentIndex * (cardWidth + gap);
-
-      this.trackEl.style.transition = smooth ? "transform 0.65s cubic-bezier(0.22, 1, 0.36, 1)" : "none";
-      this.trackEl.style.transform = `translateX(-${offset}px)`;
-
-      // Actualizar dots
-      if (this.dotsContainer) {
-        const dots = this.dotsContainer.querySelectorAll(".carousel-dot");
-        dots.forEach((d, i) => {
-          d.classList.toggle("active", i === this.currentIndex);
-        });
-      }
-    }
-
-    startAutoPlay() {
-      this.stopAutoPlay();
-      this.autoPlayInterval = setInterval(() => {
-        this.nextSlide();
-      }, this.autoPlayDelay);
-    }
-
-    stopAutoPlay() {
-      if (this.autoPlayInterval) {
-        clearInterval(this.autoPlayInterval);
-        this.autoPlayInterval = null;
-      }
+      requestAnimationFrame(step);
     }
 
     // Drag & Touch handlers
-    handleDragStart(e) {
+    onDragStart(e) {
       this.isDragging = true;
-      this.stopAutoPlay();
-      this.startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      this.isPaused = true;
+      this.hasMoved = false;
+      this.dragStartX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      this.initialOffset = this.currentOffset;
     }
 
-    handleDragMove(e) {
+    onDragMove(e) {
       if (!this.isDragging) return;
       const currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-      const diffX = currentX - this.startX;
+      const deltaX = currentX - this.dragStartX;
 
-      // Resistencia en arrastre
-      if (Math.abs(diffX) > 60) {
-        this.isDragging = false;
-        if (diffX < 0) {
-          this.nextSlide();
-        } else {
-          this.prevSlide();
-        }
-        this.startAutoPlay();
+      if (Math.abs(deltaX) > 6) {
+        this.hasMoved = true;
       }
+
+      this.currentOffset = this.initialOffset - deltaX;
     }
 
-    handleDragEnd() {
+    onDragEnd() {
       if (this.isDragging) {
         this.isDragging = false;
-        this.startAutoPlay();
+        // Reanudar movimiento constante después de un momento de lectura
+        setTimeout(() => {
+          if (!this.isHovering) {
+            this.isPaused = false;
+          }
+        }, 1500);
       }
     }
 
     // Lightbox
     openLightbox(imageUrl, caption) {
       if (!this.lightboxModal || !this.lightboxImg) return;
-      this.stopAutoPlay();
+      this.isPaused = true;
       this.lightboxImg.src = imageUrl;
       if (this.lightboxCaption) {
         this.lightboxCaption.textContent = caption || "Conversación real con clienta de Danna Mesa Studio";
@@ -435,7 +393,9 @@
           }
         }, 250);
       }
-      this.startAutoPlay();
+      if (!this.isHovering) {
+        this.isPaused = false;
+      }
     }
 
     escapeHtml(text) {
@@ -447,6 +407,6 @@
 
   // Inicializar al cargar el DOM
   document.addEventListener("DOMContentLoaded", () => {
-    window.testimonialsApp = new TestimonialsCarouselApp();
+    window.testimonialsApp = new ContinuousTestimonialsMarquee();
   });
 })();
