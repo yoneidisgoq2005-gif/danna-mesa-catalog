@@ -342,10 +342,16 @@ class CatalogApp {
     filtered.forEach(service => {
       const isSelected = this.selectedServices.has(service.id);
       
-      // Etiquetas
-      const tagsHtml = (service.tags || [])
-        .map(t => `<span class="service-badge-tag">${t}</span>`)
-        .join("");
+      // Etiquetas elegantes sin superposición
+      let tagsHtml = "";
+      if (Array.isArray(service.tags) && service.tags.length > 0) {
+        const displayTags = service.tags.slice(0, 2);
+        tagsHtml = `
+          <div class="service-badges-container">
+            ${displayTags.map(t => `<span class="service-badge-tag">${t}</span>`).join("")}
+          </div>
+        `;
+      }
 
       // Desglose de retoques si aplica
       let retouchHtml = "";
@@ -548,7 +554,9 @@ class CatalogApp {
           host.innerHTML = `
             <div class="service-card-media" data-lightbox-src="${service.image}" data-lightbox-caption="${service.name} (Principal)" style="cursor: pointer;">
               <img src="${service.image || 'assets/img/page_img_1.jpeg'}" alt="${service.name}" style="object-position: ${service.imagePosition || 'center center'};">
-              <span class="service-badge-tag">${service.badge || service.type || 'Principal'}</span>
+              <div class="service-badges-container">
+                <span class="service-badge-tag">${service.badge || service.type || 'Principal'}</span>
+              </div>
               <div class="result-photo-zoom-icon" style="opacity: 1; transform: scale(1);">🔍</div>
             </div>
           `;
@@ -559,7 +567,9 @@ class CatalogApp {
           host.innerHTML = `
             <div class="service-card-media" data-lightbox-src="${src}" data-lightbox-caption="${btn.dataset.title || service.name}" style="cursor: pointer;">
               <img src="${src}" alt="${service.name}" style="object-position: ${pos};">
-              <span class="service-badge-tag">${btn.getAttribute("title") || "Evidencia Real"}</span>
+              <div class="service-badges-container">
+                <span class="service-badge-tag">${btn.getAttribute("title") || "Evidencia Real"}</span>
+              </div>
               <div class="result-photo-zoom-icon" style="opacity: 1; transform: scale(1);">🔍</div>
             </div>
           `;
