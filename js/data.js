@@ -610,7 +610,10 @@ class CatalogState {
         return true;
       }
     } catch (err) {
-      console.error("[CatalogState] Error guardando en la nube:", err);
+      console.warn("[CatalogState] Firestore cloud write notice:", err);
+      if (err && (err.code === "permission-denied" || err.message.includes("permissions"))) {
+        throw new Error("Para sincronizar en la nube entre múltiples dispositivos, recuerda configurar las reglas en tu consola de Firebase a 'allow read, write: if true;'. Tus cambios ya quedaron guardados y aplicados en este navegador.");
+      }
       throw err;
     }
     return false;

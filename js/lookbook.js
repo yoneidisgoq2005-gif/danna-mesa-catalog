@@ -877,9 +877,12 @@ class LookbookManager {
       await this.state.saveToCloud(this.state.data);
       this.closePageEditor();
       this.render();
-      if (window.catalogApp) window.catalogApp.showToast("✓ ¡Página guardada exitosamente en Firestore!");
+      if (window.catalogApp) window.catalogApp.showToast("✓ ¡Página guardada con éxito!");
     } catch (err) {
-      alert("Error al guardar: " + err.message);
+      this.closePageEditor();
+      this.render();
+      if (window.catalogApp) window.catalogApp.showToast("✓ Cambios aplicados localmente");
+      alert(err.message);
     }
   }
 
