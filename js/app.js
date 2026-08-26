@@ -83,36 +83,91 @@ class CatalogApp {
       });
     }
 
-    // Navegación con Flechas y Barra Deslizadora de Categorías (Efecto Carrusel Interactivo)
+    // ==========================================
+    // CARRUSEL INTERACTIVO DE CATEGORÍAS (AUTO-SCROLL SUAVE & DRAG)
+    // ==========================================
     const navScroll = document.getElementById("categoryNavScroll");
     const prevBtn = document.getElementById("catNavPrevBtn");
     const nextBtn = document.getElementById("catNavNextBtn");
     const slider = document.getElementById("catNavSlider");
 
-    if (navScroll && prevBtn && nextBtn) {
-      prevBtn.addEventListener("click", () => {
-        navScroll.scrollBy({ left: -260, behavior: "smooth" });
-      });
+    if (navScroll) {
+      let isPaused = false;
+      let resumeTimeout = null;
+      let scrollDirection = 1; // 1: adelante, -1: atrás
+      const autoScrollSpeed = 0.45; // Velocidad suave y elegante
 
-      nextBtn.addEventListener("click", () => {
-        navScroll.scrollBy({ left: 260, behavior: "smooth" });
-      });
+      const pauseCarousel = () => {
+        isPaused = true;
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+      };
 
-      // Arrastre con ratón (Mouse Drag & Touch Swipe) estilo carrusel interactivo
+      const resumeCarousel = () => {
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+        resumeTimeout = setTimeout(() => {
+          isPaused = false;
+        }, 2500);
+      };
+
+      // Loop de movimiento continuo automático tipo carrusel
+      const autoScrollLoop = () => {
+        if (!isPaused && navScroll) {
+          const maxScroll = navScroll.scrollWidth - navScroll.clientWidth;
+          if (maxScroll > 10) {
+            if (navScroll.scrollLeft >= maxScroll - 2) {
+              scrollDirection = -1;
+            } else if (navScroll.scrollLeft <= 2) {
+              scrollDirection = 1;
+            }
+            navScroll.scrollLeft += scrollDirection * autoScrollSpeed;
+          }
+        }
+        requestAnimationFrame(autoScrollLoop);
+      };
+      requestAnimationFrame(autoScrollLoop);
+
+      // Pausar al pasar el ratón o tocar
+      navScroll.addEventListener("mouseenter", pauseCarousel);
+      navScroll.addEventListener("mouseleave", resumeCarousel);
+      navScroll.addEventListener("touchstart", pauseCarousel, { passive: true });
+      navScroll.addEventListener("touchend", resumeCarousel, { passive: true });
+
+      // Botones de flecha
+      if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+          pauseCarousel();
+          navScroll.scrollBy({ left: -260, behavior: "smooth" });
+          resumeCarousel();
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+          pauseCarousel();
+          navScroll.scrollBy({ left: 260, behavior: "smooth" });
+          resumeCarousel();
+        });
+      }
+
+      // Arrastre con ratón (Mouse Drag to Scroll)
       let isDown = false;
       let startX;
       let scrollLeftPos;
 
       navScroll.addEventListener("mousedown", (e) => {
         isDown = true;
+        pauseCarousel();
         navScroll.classList.add("dragging");
         startX = e.pageX - navScroll.offsetLeft;
         scrollLeftPos = navScroll.scrollLeft;
       });
 
       window.addEventListener("mouseup", () => {
-        isDown = false;
-        navScroll.classList.remove("dragging");
+        if (isDown) {
+          isDown = false;
+          navScroll.classList.remove("dragging");
+          resumeCarousel();
+        }
       });
 
       navScroll.addEventListener("mousemove", (e) => {
@@ -134,16 +189,20 @@ class CatalogApp {
       // Mover pestañas al deslizar la barra
       if (slider) {
         slider.addEventListener("input", (e) => {
+          pauseCarousel();
           const maxScroll = navScroll.scrollWidth - navScroll.clientWidth;
           navScroll.scrollLeft = (e.target.value / 100) * maxScroll;
+          resumeCarousel();
         });
       }
 
       // Scroll horizontal suave con la rueda del ratón
       navScroll.addEventListener("wheel", (e) => {
         if (e.deltaY !== 0) {
+          pauseCarousel();
           e.preventDefault();
           navScroll.scrollLeft += e.deltaY;
+          resumeCarousel();
         }
       }, { passive: false });
     }
@@ -720,6 +779,12 @@ class CatalogApp {
   }
 
   toggleServiceSelection(serviceId) {
+    if (serviceId === 'cejas-diseno-henna' && !this.state.getServiceById('cejas-diseno-henna')) {
+      serviceId = 'cejas-henna';
+    } else if (serviceId === 'cejas-henna' && !this.state.getServiceById('cejas-henna')) {
+      serviceId = 'cejas-diseno-henna';
+    }
+
     const isSelected = !this.selectedServices.has(serviceId);
     if (isSelected) {
       this.selectedServices.add(serviceId);
