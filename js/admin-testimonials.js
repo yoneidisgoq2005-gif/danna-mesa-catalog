@@ -1,7 +1,7 @@
 /**
  * ==========================================================================
- * DANNA MESA STUDIO — CENTRO DE CONTROL TOTAL EN LA NUBE (ADMIN HUB V10)
- * Gestión Unificada: Testimonios, Fotos, Servicios, Galería Multi-Clienta, Portada, Revista & Firestore
+ * DANNA MESA STUDIO — CENTRO DE CONTROL TOTAL EN LA NUBE (ADMIN HUB V14)
+ * Gestión Unificada: Testimonios, Fotos, Servicios, Galería Multi-Clienta, Revista Editorial & Firestore
  * ==========================================================================
  */
 
@@ -218,6 +218,8 @@
       this.heroBannerForm = document.getElementById("heroBannerForm");
       this.policiesForm = document.getElementById("policiesForm");
       this.studioForm = document.getElementById("studioForm");
+      this.lookbookConfigForm = document.getElementById("lookbookConfigForm");
+      this.btnReloadLookbookPreview = document.getElementById("btnReloadLookbookPreview");
 
       // Lookbook Iframe
       this.adminLookbookIframe = document.getElementById("adminLookbookIframe");
@@ -364,6 +366,12 @@
       if (this.studioForm) {
         this.studioForm.addEventListener("submit", (e) => this.handleSaveStudio(e));
       }
+      if (this.lookbookConfigForm) {
+        this.lookbookConfigForm.addEventListener("submit", (e) => this.handleSaveLookbookConfig(e));
+      }
+      if (this.btnReloadLookbookPreview) {
+        this.btnReloadLookbookPreview.addEventListener("click", () => this.reloadLookbookIframe());
+      }
 
       // Cloud Sync & Backups Buttons
       if (this.btnPushAllToCloud) {
@@ -385,10 +393,8 @@
         this.populateFormsFromState();
         if (this.activeTab === "all_photos") this.renderMasterPhotos();
         if (this.activeTab === "services") this.renderServicesList();
-        if (this.activeTab === "lookbook_preview" && this.adminLookbookIframe) {
-          try {
-            this.adminLookbookIframe.contentWindow.location.reload();
-          } catch (e) {}
+        if (this.activeTab === "lookbook_preview") {
+          this.reloadLookbookIframe();
         }
       });
     }
@@ -471,11 +477,16 @@
       if (tabKey === "testimonials") this.loadTestimonials();
       if (tabKey === "all_photos") this.renderMasterPhotos();
       if (tabKey === "services") this.renderServicesList();
-      if (tabKey === "lookbook_preview" && this.adminLookbookIframe) {
-        try {
-          this.adminLookbookIframe.src = "index.html#lookbook";
-        } catch (e) {}
+      if (tabKey === "lookbook_preview") {
+        this.reloadLookbookIframe();
       }
+    }
+
+    reloadLookbookIframe() {
+      if (!this.adminLookbookIframe) return;
+      try {
+        this.adminLookbookIframe.src = "index.html#lookbook?t=" + Date.now();
+      } catch (e) {}
     }
 
     // ================= 1. TESTIMONIOS =================
@@ -1281,6 +1292,27 @@
         if (document.getElementById("studioFormInstagram")) document.getElementById("studioFormInstagram").value = data.studio.instagram || "";
         if (document.getElementById("studioFormTiktok")) document.getElementById("studioFormTiktok").value = data.studio.tiktok || "";
       }
+
+      // Lookbook Editorial Config
+      if (data.lookbook) {
+        const lb = data.lookbook;
+        if (document.getElementById("lbFormCoverTitle")) document.getElementById("lbFormCoverTitle").value = lb.coverTitle || (data.studio ? data.studio.name : "") || "";
+        if (document.getElementById("lbFormCoverSubtitle")) document.getElementById("lbFormCoverSubtitle").value = lb.coverSubtitle || "Catálogo Colección 2026";
+        if (document.getElementById("lbFormCoverYear")) document.getElementById("lbFormCoverYear").value = lb.coverYear || "2026";
+        if (document.getElementById("lbFormWelcomeLead")) document.getElementById("lbFormWelcomeLead").value = lb.welcomeLead || (data.hero ? data.hero.welcomeLead : "") || "";
+        if (document.getElementById("lbFormWelcomeText")) document.getElementById("lbFormWelcomeText").value = lb.welcomeText || (data.hero ? data.hero.welcomeText : "") || "";
+        if (document.getElementById("lbFormLiftingTitle")) document.getElementById("lbFormLiftingTitle").value = lb.liftingDividerTitle || "Lifting";
+        if (document.getElementById("lbFormLiftingQuote")) document.getElementById("lbFormLiftingQuote").value = lb.liftingDividerQuote || "El servicio insignia";
+        if (document.getElementById("lbFormExtTitle")) document.getElementById("lbFormExtTitle").value = lb.extensionsDividerTitle || "Extensiones";
+        if (document.getElementById("lbFormExtQuote")) document.getElementById("lbFormExtQuote").value = lb.extensionsDividerQuote || "La mirada que siempre imaginaste.";
+        if (document.getElementById("lbFormCejasTitle")) document.getElementById("lbFormCejasTitle").value = lb.cejasDividerTitle || "Cejas";
+        if (document.getElementById("lbFormCejasQuote")) document.getElementById("lbFormCejasQuote").value = lb.cejasDividerQuote || "Un diseño pensado para tu rostro.";
+        if (document.getElementById("lbFormLipsTitle")) document.getElementById("lbFormLipsTitle").value = lb.hydralipsDividerTitle || "HydraLips";
+        if (document.getElementById("lbFormLipsQuote")) document.getElementById("lbFormLipsQuote").value = lb.hydralipsDividerQuote || "Tus labios en su mejor versión.";
+        if (document.getElementById("lbFormBackTitle")) document.getElementById("lbFormBackTitle").value = lb.backCoverTitle || (data.studio ? data.studio.name : "Danna Mesa Studio");
+        if (document.getElementById("lbFormBackQuote")) document.getElementById("lbFormBackQuote").value = lb.backCoverQuote || "Tu mirada, nuestro sello.";
+        if (document.getElementById("lbFormBackCta")) document.getElementById("lbFormBackCta").value = lb.backCoverCta || "Una experiencia creada para resaltar tu esencia natural.";
+      }
     }
 
     async handleSaveHeroBanner(e) {
@@ -1350,6 +1382,41 @@
       }
     }
 
+    async handleSaveLookbookConfig(e) {
+      e.preventDefault();
+      this.state.data.lookbook = {
+        coverTitle: document.getElementById("lbFormCoverTitle").value.trim(),
+        coverSubtitle: document.getElementById("lbFormCoverSubtitle").value.trim(),
+        coverYear: document.getElementById("lbFormCoverYear").value.trim(),
+        welcomeKicker: "01 · Bienvenida",
+        welcomeTitle: "Bienvenida",
+        welcomeLead: document.getElementById("lbFormWelcomeLead").value.trim(),
+        welcomeText: document.getElementById("lbFormWelcomeText").value.trim(),
+        studioTitle: "Studio Experience",
+        studioQuote: document.getElementById("lbFormBackQuote").value.trim(),
+        studioDesc: "Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.",
+        liftingDividerTitle: document.getElementById("lbFormLiftingTitle").value.trim(),
+        liftingDividerQuote: document.getElementById("lbFormLiftingQuote").value.trim(),
+        extensionsDividerTitle: document.getElementById("lbFormExtTitle").value.trim(),
+        extensionsDividerQuote: document.getElementById("lbFormExtQuote").value.trim(),
+        cejasDividerTitle: document.getElementById("lbFormCejasTitle").value.trim(),
+        cejasDividerQuote: document.getElementById("lbFormCejasQuote").value.trim(),
+        hydralipsDividerTitle: document.getElementById("lbFormLipsTitle").value.trim(),
+        hydralipsDividerQuote: document.getElementById("lbFormLipsQuote").value.trim(),
+        backCoverTitle: document.getElementById("lbFormBackTitle").value.trim(),
+        backCoverQuote: document.getElementById("lbFormBackQuote").value.trim(),
+        backCoverCta: document.getElementById("lbFormBackCta").value.trim()
+      };
+
+      try {
+        await this.state.saveToCloud(this.state.data);
+        this.reloadLookbookIframe();
+        this.showToast("✓ Configuración editorial de la Revista guardada en Firestore", "success");
+      } catch (err) {
+        alert("Error al guardar: " + err.message);
+      }
+    }
+
     // ================= 5. CLOUD SYNC & BACKUPS =================
     async handlePushAllToCloud() {
       if (!confirm("¿Deseas subir todo el catálogo actual a la base de datos de Firebase Firestore?")) return;
@@ -1398,6 +1465,7 @@
             this.populateFormsFromState();
             this.renderMasterPhotos();
             this.renderServicesList();
+            this.reloadLookbookIframe();
             this.showToast("✨ ¡Copia de seguridad restaurada con éxito en la nube!", "success");
           }
         } catch (err) {
@@ -1416,6 +1484,7 @@
         this.populateFormsFromState();
         this.renderMasterPhotos();
         this.renderServicesList();
+        this.reloadLookbookIframe();
         this.showToast("✓ Valores originales restablecidos y sincronizados en la nube", "success");
       } catch (err) {
         alert("Error al restablecer: " + err.message);

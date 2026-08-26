@@ -41,6 +41,30 @@ const DEFAULT_CATALOG_DATA = {
     imagePosition: "center 30%"
   },
 
+  lookbook: {
+    coverTitle: "Danna Mesa",
+    coverSubtitle: "Catálogo Colección 2026",
+    coverYear: "2026",
+    welcomeKicker: "01 · Bienvenida",
+    welcomeTitle: "Bienvenida",
+    welcomeLead: "En Danna Mesa Studio entendemos que tu mirada es tu firma más personal. Cada servicio se diseña de forma única y exclusiva para ti.",
+    welcomeText: "Aquí tu cita es solo tuya, tú solo cierra los ojos y confía. Bienvenida.",
+    studioTitle: "Studio Experience",
+    studioQuote: "Tu mirada, nuestro sello.",
+    studioDesc: "Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.",
+    liftingDividerTitle: "Lifting",
+    liftingDividerQuote: "El servicio insignia",
+    extensionsDividerTitle: "Extensiones",
+    extensionsDividerQuote: "La mirada que siempre imaginaste.",
+    cejasDividerTitle: "Cejas",
+    cejasDividerQuote: "Un diseño pensado para tu rostro.",
+    hydralipsDividerTitle: "HydraLips",
+    hydralipsDividerQuote: "Tus labios en su mejor versión.",
+    backCoverTitle: "Danna Mesa Studio",
+    backCoverQuote: "Tu mirada, nuestro sello.",
+    backCoverCta: "Agenda tu experiencia exclusiva por WhatsApp"
+  },
+
   theme: {
     primaryColor: "#9c7e54", // Bronce
     secondaryColor: "#1b1a16", // Carbón
@@ -520,7 +544,7 @@ const DEFAULT_CATALOG_DATA = {
  */
 class CatalogState {
   constructor() {
-    this.storageKey = "danna_mesa_catalog_v2026_v10";
+    this.storageKey = "danna_mesa_catalog_v2026_v14";
     this.data = this.loadData();
     this.initCloudSync();
   }

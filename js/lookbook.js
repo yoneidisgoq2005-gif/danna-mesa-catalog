@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * DANNA MESA STUDIO — LOOKBOOK MAGAZINE RENDERER (100% DINÁMICO & REACTIVO)
+ * DANNA MESA STUDIO — LOOKBOOK MAGAZINE RENDERER (100% DINÁMICO & EDITABLE)
  * Renderiza la revista editorial sincronizada en tiempo real con Firestore
  * ==========================================================================
  */
@@ -22,43 +22,49 @@ class LookbookManager {
     const data = this.state.data;
     if (!data) return;
 
+    const lb = data.lookbook || (typeof DEFAULT_CATALOG_DATA !== 'undefined' ? DEFAULT_CATALOG_DATA.lookbook : {}) || {};
+
     let html = "";
     let pageCounter = 1;
 
     // ================= PÁGINA 1: PORTADA =================
     const heroImg = (data.hero && data.hero.image) ? data.hero.image : "assets/img/page_img_1.jpeg";
     const heroPos = (data.hero && data.hero.imagePosition) ? data.hero.imagePosition : "center 20%";
-    const studioName = (data.studio && data.studio.name) ? data.studio.name : "Danna Mesa";
+    const coverTitle = lb.coverTitle || (data.studio && data.studio.name) || "Danna Mesa";
+    const coverSubtitle = lb.coverSubtitle || "Catálogo Colección 2026";
+    const coverYear = lb.coverYear || "2026";
     const studioLoc = (data.studio && data.studio.location) ? data.studio.location : "Armenia · Quindío, Colombia";
 
     html += `
       <section class="lb-page lb-cover" id="lb-page-${pageCounter}">
         <div class="bleed">
-          <img class="bleed-img" src="${heroImg}" style="object-position: ${heroPos}; width: 100%; height: 100%; object-fit: cover;" alt="Portada ${studioName}">
+          <img class="bleed-img" src="${heroImg}" style="object-position: ${heroPos}; width: 100%; height: 100%; object-fit: cover;" alt="Portada ${coverTitle}">
         </div>
         <div class="scrim"></div>
-        <div class="lb-run top"><span>Studio Experience</span><span class="tick">·</span><span>Colección 2026</span></div>
+        <div class="lb-run top"><span>Studio Experience</span><span class="tick">·</span><span>Colección ${coverYear}</span></div>
         <div class="brand">
-          <h1 class="wm">${studioName}</h1>
-          <div class="sub"><span class="ln"></span><span>Catálogo Colección 2026</span></div>
+          <h1 class="wm">${coverTitle}</h1>
+          <div class="sub"><span class="ln"></span><span>${coverSubtitle}</span></div>
         </div>
-        <span class="yr">2026</span>
+        <span class="yr">${coverYear}</span>
         <div class="lb-run bot"><span>${studioLoc}</span><span>0${pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
 
     // ================= PÁGINA 2: BIENVENIDA =================
-    const welcomeLead = (data.studio && data.studio.welcomeLead) ? data.studio.welcomeLead : (data.hero && data.hero.welcomeLead ? data.hero.welcomeLead : "");
-    const welcomeText = (data.studio && data.studio.welcomeText) ? data.studio.welcomeText : "Aquí tu cita es solo tuya, tú solo cierra los ojos y confía. Bienvenida.";
+    const welcomeKicker = lb.welcomeKicker || "01 · Bienvenida";
+    const welcomeTitle = lb.welcomeTitle || "Bienvenida";
+    const welcomeLead = lb.welcomeLead || (data.studio && data.studio.welcomeLead) || (data.hero && data.hero.welcomeLead) || "En Danna Mesa Studio entendemos que tu mirada es tu firma más personal.";
+    const welcomeText = lb.welcomeText || (data.studio && data.studio.welcomeText) || "Aquí tu cita es solo tuya, tú solo cierra los ojos y confía. Bienvenida.";
     const tagline = (data.studio && data.studio.tagline) ? data.studio.tagline : "Studio Experience";
 
     html += `
       <section class="lb-page" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>01 — Bienvenida</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>${welcomeKicker}</span></div>
         <div style="position: absolute; left: 9%; right: 9%; top: 18%;">
-          <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4em; color: var(--color-primary);">01 · Bienvenida</span>
-          <h2 style="font-size: 8.5cqw; margin-top: 1.5cqw;">Bienvenida</h2>
+          <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4em; color: var(--color-primary);">${welcomeKicker}</span>
+          <h2 style="font-size: 8.5cqw; margin-top: 1.5cqw;">${welcomeTitle}</h2>
           <div style="height: 1px; background: var(--color-hairline); margin: 3cqw 0;"></div>
           <p style="font-family: var(--font-serif); font-size: 3.2cqw; line-height: 1.35; color: var(--color-ink); max-width: 85%;">
             ${welcomeLead}
@@ -67,7 +73,7 @@ class LookbookManager {
             ${welcomeText}
           </p>
           <div style="margin-top: 6cqw; border-top: 2px solid var(--color-primary); padding-top: 1.5cqw; display: inline-block;">
-            <div style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.24em; font-size: 1.8cqw;">${studioName}</div>
+            <div style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.24em; font-size: 1.8cqw;">${coverTitle}</div>
             <div style="font-size: 1.3cqw; text-transform: uppercase; letter-spacing: 0.3em; color: var(--color-muted);">${tagline}</div>
           </div>
         </div>
@@ -77,20 +83,23 @@ class LookbookManager {
     pageCounter++;
 
     // ================= PÁGINA 3: STUDIO EXPERIENCE =================
-    const slogan = (data.studio && data.studio.slogan) ? data.studio.slogan : "Tu mirada, nuestro sello.";
+    const studioQuote = lb.studioQuote || (data.studio && data.studio.slogan) || "Tu mirada, nuestro sello.";
+    const studioDesc = lb.studioDesc || "Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.";
+    const studioTitle = lb.studioTitle || "Studio Experience";
+
     html += `
       <section class="lb-page" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>02 — Studio Experience</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>02 — ${studioTitle}</span></div>
         <div style="position: absolute; left: 9%; right: 9%; top: 18%;">
-          <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4em; color: var(--color-primary);">02 · ${studioName}</span>
-          <h2 style="font-size: 8cqw; margin-top: 1cqw;">${studioName}</h2>
+          <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4em; color: var(--color-primary);">02 · ${coverTitle}</span>
+          <h2 style="font-size: 8cqw; margin-top: 1cqw;">${studioTitle}</h2>
           <div style="height: 1px; background: var(--color-hairline); margin: 3cqw 0 4cqw;"></div>
           
           <p style="font-family: var(--font-serif); font-style: italic; font-size: 3.2cqw; line-height: 1.35; color: var(--color-primary); margin-bottom: 2cqw;">
-            "${slogan}"
+            "${studioQuote}"
           </p>
           <p style="font-size: 2.2cqw; line-height: 1.6; color: var(--color-ink-light); max-width: 85%;">
-            Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.
+            ${studioDesc}
           </p>
           
           <div style="margin-top: 5cqw; display: flex; gap: 4cqw; border-top: 1px solid var(--color-hairline); padding-top: 2cqw;">
@@ -104,18 +113,21 @@ class LookbookManager {
             </div>
           </div>
         </div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>0${pageCounter}</span></div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>0${pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
 
     // ================= PÁGINA 4: DIVIDER LIFTING =================
+    const liftingDivTitle = lb.liftingDividerTitle || "Lifting";
+    const liftingDivQuote = lb.liftingDividerQuote || "El servicio insignia";
+
     html += `
       <section class="lb-page dark lb-divider" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Colección 1</span></div>
-        <div class="big-title">Lifting</div>
-        <div class="lead-quote">El servicio insignia</div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>0${pageCounter}</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Colección 1</span></div>
+        <div class="big-title">${liftingDivTitle}</div>
+        <div class="lead-quote">${liftingDivQuote}</div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>0${pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
@@ -140,7 +152,7 @@ class LookbookManager {
 
     html += `
       <section class="lb-page" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Lifting de Pestañas</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Lifting de Pestañas</span></div>
         <div style="position: absolute; left: 0; top: 0; width: 50%; height: 100%; overflow: hidden;">
           <img src="${liftingService.image || 'assets/img/page_img_2.jpeg'}" style="width: 100%; height: 100%; object-fit: cover; object-position: ${liftingService.imagePosition || 'center 40%'};" alt="${liftingService.name}">
         </div>
@@ -149,7 +161,7 @@ class LookbookManager {
           <h2 style="font-size: 5.5cqw; line-height: 1; margin-bottom: 2.5cqw;">${liftingService.subtitle || 'Resalta lo que ya eres'}</h2>
           <p style="font-size: 2cqw; line-height: 1.6; color: var(--color-ink-light);">${liftingService.desc}</p>
         </div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>0${pageCounter}</span></div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>0${pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
@@ -157,7 +169,7 @@ class LookbookManager {
     // Galería de Resultados Lifting
     html += `
       <section class="lb-page" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>03 — Resultados Reales</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>03 — Resultados Reales</span></div>
         <div style="position: absolute; left: 9%; right: 9%; top: 12%; display: flex; gap: 3.5%;">
           ${liftGallery.slice(0, 3).map((g, idx) => `
             <div style="flex: 1;">
@@ -180,18 +192,21 @@ class LookbookManager {
           <div style="flex: 1; padding-left: 4cqw; border-right: 1px solid var(--color-hairline);"><span style="font-size:1.3cqw; text-transform:uppercase; color:var(--color-primary); font-weight:600; display:block;">Tiempo</span><span style="font-family:var(--font-serif); font-size:2.6cqw;">${liftingService.appointmentTime || '60-90 min'}</span></div>
           <div style="flex: 1; padding-left: 4cqw;"><span style="font-size:1.3cqw; text-transform:uppercase; color:var(--color-primary); font-weight:600; display:block;">Valor</span><span style="font-family:var(--font-serif); font-size:3cqw; color:var(--color-primary);">${this.state.formatMoney(liftingService.price)}</span></div>
         </div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>0${pageCounter}</span></div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>0${pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
 
     // ================= PÁGINA 7: DIVIDER EXTENSIONES =================
+    const extDivTitle = lb.extensionsDividerTitle || "Extensiones";
+    const extDivQuote = lb.extensionsDividerQuote || "La mirada que siempre imaginaste.";
+
     html += `
       <section class="lb-page dark lb-divider" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Colección 2</span></div>
-        <div class="big-title" style="font-size: 9.5cqw;">Extensiones</div>
-        <div class="lead-quote">La mirada que siempre imaginaste.</div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>0${pageCounter}</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Colección 2</span></div>
+        <div class="big-title" style="font-size: 9.5cqw;">${extDivTitle}</div>
+        <div class="lead-quote">${extDivQuote}</div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>0${pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
@@ -209,7 +224,7 @@ class LookbookManager {
       } else if (s1 && !s2) {
         html += `
           <section class="lb-page" id="lb-page-${pageCounter}">
-            <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Extensiones</span></div>
+            <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Extensiones</span></div>
             <div style="position: absolute; left: 9%; right: 9%; top: 12%;">
               <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.38em; color: var(--color-primary);">Colección 2 · Extensiones</span>
               <h2 style="font-size: 7.5cqw; margin-top: 0.8cqw;">${s1.name}</h2>
@@ -231,7 +246,7 @@ class LookbookManager {
                 </div>
               </div>
             </div>
-            <div class="lb-run bot"><span>Colección 2026</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
+            <div class="lb-run bot"><span>Colección ${coverYear}</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
           </section>
         `;
         pageCounter++;
@@ -253,7 +268,7 @@ class LookbookManager {
 
     html += `
       <section class="lb-page" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Políticas</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Políticas</span></div>
         <div style="position: absolute; left: 9%; right: 9%; top: 12%;">
           <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.38em; color: var(--color-primary);">Condiciones del servicio</span>
           <h2 style="font-size: 7cqw; margin-top: 0.8cqw;">${policies.title}</h2>
@@ -268,18 +283,21 @@ class LookbookManager {
             ${policies.note}
           </p>
         </div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
 
     // ================= PÁGINA DIVIDER CEJAS =================
+    const cejasDivTitle = lb.cejasDividerTitle || "Cejas";
+    const cejasDivQuote = lb.cejasDividerQuote || "Un diseño pensado para tu rostro.";
+
     html += `
       <section class="lb-page dark lb-divider" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Colección 3</span></div>
-        <div class="big-title">Cejas</div>
-        <div class="lead-quote">Un diseño pensado para tu rostro.</div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Colección 3</span></div>
+        <div class="big-title">${cejasDivTitle}</div>
+        <div class="lead-quote">${cejasDivQuote}</div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
@@ -299,12 +317,15 @@ class LookbookManager {
     }
 
     // ================= PÁGINA DIVIDER HYDRALIPS =================
+    const lipsDivTitle = lb.hydralipsDividerTitle || "HydraLips";
+    const lipsDivQuote = lb.hydralipsDividerQuote || "Tus labios en su mejor versión.";
+
     html += `
       <section class="lb-page dark lb-divider" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Colección 4</span></div>
-        <div class="big-title" style="font-size: 8.5cqw;">HydraLips</div>
-        <div class="lead-quote">Tus labios en su mejor versión.</div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Colección 4</span></div>
+        <div class="big-title" style="font-size: 8.5cqw;">${lipsDivTitle}</div>
+        <div class="lead-quote">${lipsDivQuote}</div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
@@ -323,7 +344,7 @@ class LookbookManager {
 
     html += `
       <section class="lb-page" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>HydraLips</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>HydraLips</span></div>
         <div style="position: absolute; left: 0; top: 0; width: 48%; height: 100%; overflow: hidden;">
           <img src="${hydra.image || 'assets/img/page_img_19.jpeg'}" style="width:100%; height:100%; object-fit:cover; object-position: ${hydra.imagePosition || 'center 45%'};" alt="HydraLips">
         </div>
@@ -337,7 +358,7 @@ class LookbookManager {
             <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(hydra.price)}</span></div>
           </div>
         </div>
-        <div class="lb-run bot"><span>Colección 2026</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
+        <div class="lb-run bot"><span>Colección ${coverYear}</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
       </section>
     `;
     pageCounter++;
@@ -347,7 +368,7 @@ class LookbookManager {
     if (expServices.length > 0) {
       html += `
         <section class="lb-page" id="lb-page-${pageCounter}">
-          <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Experiencias Exclusivas</span></div>
+          <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Experiencias Exclusivas</span></div>
           <div style="position: absolute; left: 9%; right: 9%; top: 12%;">
             <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.38em; color: var(--color-primary);">Colección 5 · Experiencias</span>
             <h2 style="font-size: 6cqw; margin-top: 0.5cqw;">${(data.comboBanner && data.comboBanner.title) ? data.comboBanner.title : 'Experiencias Exclusivas'}</h2>
@@ -367,7 +388,7 @@ class LookbookManager {
               `).join("")}
             </div>
           </div>
-          <div class="lb-run bot"><span>Colección 2026</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
+          <div class="lb-run bot"><span>Colección ${coverYear}</span><span>${pageCounter < 10 ? '0' + pageCounter : pageCounter}</span></div>
         </section>
       `;
       pageCounter++;
@@ -376,17 +397,20 @@ class LookbookManager {
     // ================= PÁGINA CIERRE Y CONTACTO =================
     const whatsappDisp = (data.studio && data.studio.whatsappDisplay) ? data.studio.whatsappDisplay : "+57 300 627 9079";
     const instagram = (data.studio && data.studio.instagram) ? data.studio.instagram : "dannamesa_studio";
+    const backCoverTitle = lb.backCoverTitle || "Danna Mesa Studio";
+    const backCoverQuote = lb.backCoverQuote || "Tu mirada, nuestro sello.";
+    const backCoverCta = lb.backCoverCta || "Una experiencia creada para resaltar tu esencia natural.";
 
     html += `
       <section class="lb-page dark" id="lb-page-${pageCounter}">
-        <div class="lb-run top"><span>${studioName}</span><span class="tick">·</span><span>Contacto</span></div>
+        <div class="lb-run top"><span>${coverTitle}</span><span class="tick">·</span><span>Contacto</span></div>
         <div style="position: absolute; left: 9%; right: 9%; top: 22%;">
-          <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4em; color: var(--color-primary);">Tu mirada, nuestro sello</span>
-          <h2 style="font-size: 8cqw; margin-top: 1cqw; color: #efe8da;">Gracias por elegirnos</h2>
+          <span style="font-size: 1.6cqw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4em; color: var(--color-primary);">${backCoverQuote}</span>
+          <h2 style="font-size: 8cqw; margin-top: 1cqw; color: #efe8da;">${backCoverTitle}</h2>
           <div style="height: 1px; background: var(--color-hairline-dark); margin: 3cqw 0 4cqw;"></div>
           
           <p style="font-family: var(--font-serif); font-style: italic; font-size: 2.6cqw; line-height: 1.4; color: #c9b48f; margin-bottom: 4cqw;">
-            "Una experiencia creada para resaltar tu esencia natural."
+            "${backCoverCta}"
           </p>
 
           <div style="display: flex; gap: 8cqw; margin-top: 4cqw;">

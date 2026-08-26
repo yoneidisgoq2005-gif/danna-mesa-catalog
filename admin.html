@@ -351,22 +351,127 @@
         </form>
       </section>
 
-      <!-- ================= TAB 7: VISTA PREVIA DE LA REVISTA (LOOKBOOK) ================= -->
+      <!-- ================= TAB 7: EDITORIAL & VISTA PREVIA DE LA REVISTA (LOOKBOOK) ================= -->
       <section class="admin-tab-content" id="tabContentLookbookPreview">
         <div class="admin-header-actions">
           <div>
-            <h2 class="admin-section-title">Vista Previa en Vivo de la Revista (Lookbook)</h2>
+            <h2 class="admin-section-title">📖 Editor Editorial de la Revista & Vista Previa en Vivo</h2>
             <p style="font-size: 13px; color: var(--admin-text-muted);">
-              Verifica exactamente cómo se reflejan tus fotos, encuadres, nuevos efectos y precios en la versión editorial.
+              Personaliza los títulos, año, manifiesto, separadores y frases de la revista digital.
             </p>
           </div>
-          <a href="index.html#lookbook" target="_blank" class="admin-btn admin-btn-secondary">
-            📖 Abrir Revista en Pestaña Nueva
-          </a>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="admin-btn admin-btn-secondary" id="btnReloadLookbookPreview">
+              🔄 Recargar Vista Previa
+            </button>
+            <a href="index.html#lookbook" target="_blank" class="admin-btn admin-btn-secondary">
+              📖 Pantalla Completa
+            </a>
+          </div>
         </div>
 
-        <div class="admin-card-section" style="padding: 12px; height: 750px; border-radius: var(--admin-radius); overflow: hidden;">
-          <iframe id="adminLookbookIframe" src="index.html" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+        <div style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; align-items: start;">
+          <!-- Formulario de Configuración de la Revista -->
+          <form id="lookbookConfigForm" class="admin-card-section" style="display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="font-size: 15px; color: var(--admin-primary); margin-bottom: 4px;">🌟 1. Portada & Manifiesto de Bienvenida</h3>
+            
+            <div class="admin-form-group">
+              <label class="admin-form-label">Título de Portada</label>
+              <input type="text" id="lbFormCoverTitle" class="admin-form-input" placeholder="Danna Mesa">
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Subtítulo de Portada</label>
+              <input type="text" id="lbFormCoverSubtitle" class="admin-form-input" placeholder="Catálogo Colección 2026">
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Año / Temporada</label>
+              <input type="text" id="lbFormCoverYear" class="admin-form-input" placeholder="2026">
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Manifiesto de Bienvenida (Página 2)</label>
+              <textarea id="lbFormWelcomeLead" class="admin-form-textarea" rows="2"></textarea>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Mensaje de Confianza de Bienvenida</label>
+              <textarea id="lbFormWelcomeText" class="admin-form-textarea" rows="2"></textarea>
+            </div>
+
+            <h3 style="font-size: 15px; color: var(--admin-primary); margin: 10px 0 4px; border-top: 1px dashed var(--admin-border); padding-top: 14px;">📑 2. Títulos y Frases de Separadores (Dividers)</h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Separador Lifting: Título</label>
+                <input type="text" id="lbFormLiftingTitle" class="admin-form-input" placeholder="Lifting">
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Frase Lifting</label>
+                <input type="text" id="lbFormLiftingQuote" class="admin-form-input" placeholder="El servicio insignia">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Separador Extensiones: Título</label>
+                <input type="text" id="lbFormExtTitle" class="admin-form-input" placeholder="Extensiones">
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Frase Extensiones</label>
+                <input type="text" id="lbFormExtQuote" class="admin-form-input" placeholder="La mirada que siempre imaginaste.">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Separador Cejas: Título</label>
+                <input type="text" id="lbFormCejasTitle" class="admin-form-input" placeholder="Cejas">
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Frase Cejas</label>
+                <input type="text" id="lbFormCejasQuote" class="admin-form-input" placeholder="Un diseño pensado para tu rostro.">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Separador HydraLips: Título</label>
+                <input type="text" id="lbFormLipsTitle" class="admin-form-input" placeholder="HydraLips">
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Frase HydraLips</label>
+                <input type="text" id="lbFormLipsQuote" class="admin-form-input" placeholder="Tus labios en su mejor versión.">
+              </div>
+            </div>
+
+            <h3 style="font-size: 15px; color: var(--admin-primary); margin: 10px 0 4px; border-top: 1px dashed var(--admin-border); padding-top: 14px;">👑 3. Contraportada & Cierre Editorial</h3>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Título de Contraportada</label>
+              <input type="text" id="lbFormBackTitle" class="admin-form-input" placeholder="Danna Mesa Studio">
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Frase de Cierre</label>
+              <input type="text" id="lbFormBackQuote" class="admin-form-input" placeholder="Tu mirada, nuestro sello.">
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Mensaje Final / Llamado a la Acción</label>
+              <input type="text" id="lbFormBackCta" class="admin-form-input" placeholder="Una experiencia creada para resaltar tu esencia natural.">
+            </div>
+
+            <button type="submit" class="admin-btn" style="margin-top: 10px;">
+              💾 Guardar Textos de la Revista en Firestore
+            </button>
+          </form>
+
+          <!-- Vista Previa en Vivo Iframe -->
+          <div class="admin-card-section" style="padding: 12px; height: 860px; border-radius: var(--admin-radius); overflow: hidden; position: sticky; top: 80px;">
+            <iframe id="adminLookbookIframe" src="index.html#lookbook" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+          </div>
         </div>
       </section>
 
@@ -653,6 +758,6 @@
   <input type="file" id="masterPhotoFileInput" accept="image/*" style="display: none;">
 
   <!-- Script del Administrador Total -->
-  <script src="js/admin-testimonials.js?v=10"></script>
+  <script src="js/admin-testimonials.js?v=14"></script>
 </body>
 </html>
