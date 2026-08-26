@@ -105,13 +105,32 @@
       this.dragStartX = 0;
       this.initialOffset = 0;
       this.animationFrameId = null;
+      this.isInViewport = true;
       this.db = null;
 
       this.initFirebase();
       this.initElements();
+      this.setupIntersectionObserver();
       this.bindEvents();
       this.render();
       this.fetchFromFirestore();
+    }
+
+    setupIntersectionObserver() {
+      const section = document.getElementById("testimonios");
+      if (!section || !('IntersectionObserver' in window)) {
+        this.isInViewport = true;
+        return;
+      }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          this.isInViewport = entry.isIntersecting;
+          if (this.isInViewport && !this.animationFrameId) {
+            this.startLoop();
+          }
+        });
+      }, { rootMargin: "150px 0px" });
+      observer.observe(section);
     }
 
     initFirebase() {
@@ -282,9 +301,15 @@
     startLoop() {
       if (this.animationFrameId) {
         cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
       }
 
       const animate = () => {
+        if (!this.isInViewport) {
+          this.animationFrameId = null;
+          return; // Ahorro total de CPU cuando la sección de testimonios no está visible
+        }
+
         if (!this.isPaused && !this.isDragging) {
           this.currentOffset += this.speed;
         }

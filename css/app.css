@@ -9,6 +9,12 @@
   padding: 0 20px 120px;
 }
 
+/* Optimización móvil: Eliminar delay de 300ms en toques de botones y pestañas */
+button, .btn, .btn-add-cart, .cat-tab-btn, .subfilter-chip, .gallery-thumb-btn, .toggle-btn, .carousel-nav-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ================= TOP MASTHEAD & HEADER ================= */
 .site-header {
   position: sticky;

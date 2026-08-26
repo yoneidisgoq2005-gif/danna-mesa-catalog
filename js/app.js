@@ -242,12 +242,17 @@ class CatalogApp {
 
     navContainer.innerHTML = html;
 
-    // Eventos de click en categorías
+    // Eventos de click optimizados en categorías
     navContainer.querySelectorAll(".cat-tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        this.activeCategory = btn.dataset.cat;
+        const targetCat = btn.dataset.cat;
+        if (this.activeCategory === targetCat) return;
+
+        this.activeCategory = targetCat;
         this.activeSubfilter = "all";
-        this.renderCategoryTabs();
+
+        navContainer.querySelectorAll(".cat-tab-btn").forEach(b => b.classList.toggle("active", b.dataset.cat === targetCat));
+        this.renderSubfilters();
         this.renderServices();
       });
     });
@@ -273,8 +278,11 @@ class CatalogApp {
 
       subfilterContainer.querySelectorAll(".subfilter-chip").forEach(chip => {
         chip.addEventListener("click", () => {
-          this.activeSubfilter = chip.dataset.sub;
-          this.renderSubfilters();
+          const targetSub = chip.dataset.sub;
+          if (this.activeSubfilter === targetSub) return;
+
+          this.activeSubfilter = targetSub;
+          subfilterContainer.querySelectorAll(".subfilter-chip").forEach(c => c.classList.toggle("active", c.dataset.sub === targetSub));
           this.renderServices();
         });
       });
@@ -660,20 +668,41 @@ class CatalogApp {
   }
 
   toggleServiceSelection(serviceId) {
-    if (this.selectedServices.has(serviceId)) {
-      this.selectedServices.delete(serviceId);
-      this.showToast("Servicio eliminado de tu cita");
-    } else {
+    const isSelected = !this.selectedServices.has(serviceId);
+    if (isSelected) {
       this.selectedServices.add(serviceId);
       this.showToast("¡Servicio añadido a tu cita!");
+    } else {
+      this.selectedServices.delete(serviceId);
+      this.showToast("Servicio eliminado de tu cita");
     }
-    this.renderServices();
+
+    // Actualización instantánea (0ms de latencia) en el botón correspondiente
+    const card = document.querySelector(`.service-card[data-id="${serviceId}"]`);
+    if (card) {
+      const btn = card.querySelector(".btn-add-cart");
+      if (btn) {
+        btn.classList.toggle("selected", isSelected);
+        btn.textContent = isSelected ? "✓ Seleccionado" : "+ Añadir a mi cita";
+      }
+    }
+
     this.updateCartUI();
   }
 
   removeService(serviceId) {
     this.selectedServices.delete(serviceId);
-    this.renderServices();
+    
+    // Actualizar botón en la tarjeta si está visible
+    const card = document.querySelector(`.service-card[data-id="${serviceId}"]`);
+    if (card) {
+      const btn = card.querySelector(".btn-add-cart");
+      if (btn) {
+        btn.classList.remove("selected");
+        btn.textContent = "+ Añadir a mi cita";
+      }
+    }
+
     this.updateCartUI();
     this.renderCartModalContent();
   }
