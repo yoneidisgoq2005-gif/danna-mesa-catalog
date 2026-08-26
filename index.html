@@ -15,10 +15,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400;1,9..144,500&family=Pinyon+Script&display=swap" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/luxury-theme.css?v=13">
-  <link rel="stylesheet" href="css/app.css?v=13">
-  <link rel="stylesheet" href="css/lookbook.css?v=13">
-  <link rel="stylesheet" href="css/testimonials.css?v=13">
+  <link rel="stylesheet" href="css/luxury-theme.css?v=15">
+  <link rel="stylesheet" href="css/app.css?v=15">
+  <link rel="stylesheet" href="css/lookbook.css?v=15">
+  <link rel="stylesheet" href="css/testimonials.css?v=15">
 </head>
 <body>
 
@@ -208,6 +208,7 @@
     <!-- Toolbar de revista -->
     <div class="lookbook-toolbar">
       <span class="lookbook-page-indicator">Colección Editorial 2026</span>
+      <button class="lookbook-btn-text" id="lookbookEditBtn" title="Editar Contenido y Fotos de la Revista">✏️ Editar Revista</button>
       <button class="lookbook-btn" onclick="window.print()" title="Descargar / Imprimir en PDF">🖨️</button>
       <button class="lookbook-btn" onclick="catalogApp.switchView('app')" title="Volver al Catálogo Interactivo">✕</button>
     </div>
@@ -286,15 +287,85 @@
     </div>
   </div>
 
+  <!-- ================= MODAL EDITOR DIRECTO DE PÁGINAS DE LA REVISTA ================= -->
+  <div class="modal-overlay" id="lookbookPageModal" style="z-index: 260;">
+    <div class="drawer-modal-content" style="max-width: 680px; max-height: 90vh; border-radius: var(--radius-lg);">
+      <div class="drawer-header" style="background: var(--color-paper-alt); padding: 16px 24px;">
+        <div>
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--color-primary);">Editor Visual de la Revista</span>
+          <h2 class="drawer-title" id="lbPageModalTitle" style="font-size: 20px;">Editar Página</h2>
+        </div>
+        <button class="btn-remove-item" id="closeLbPageModalBtn" style="font-size: 20px;">✕</button>
+      </div>
+
+      <form id="lbPageEditForm" class="drawer-body" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+        <input type="hidden" id="lbPageEditType">
+        <input type="hidden" id="lbPageEditTargetId">
+        <input type="hidden" id="lbPageEditTargetId2">
+
+        <!-- Selector de Páginas de la Revista para Navegación Rápida -->
+        <div style="background: var(--color-paper-alt); border: 1px solid var(--color-hairline); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-primary);">Página a editar:</span>
+          <select id="lbPageQuickSelector" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); background: var(--color-paper); color: var(--color-ink); font-size: 12px; font-weight: 600;">
+            <!-- Opciones inyectadas dinámicamente -->
+          </select>
+        </div>
+
+        <!-- Contenedor de Foto y Encuadre -->
+        <div id="lbPagePhotoSection" style="background: var(--color-paper-light); border: 1px solid var(--color-hairline); border-radius: var(--radius-md); padding: 14px;">
+          <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-primary); display: block; margin-bottom: 8px;">
+            📸 Foto de esta Página
+          </label>
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <div style="width: 110px; height: 110px; border-radius: 8px; overflow: hidden; border: 1px solid var(--color-hairline); flex-shrink: 0; background: #000;">
+              <img id="lbPagePreviewImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="Preview">
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="btn btn-outline btn-sm" id="lbPageChangePhotoBtn" style="align-self: flex-start;">
+                🔄 Cambiar Foto
+              </button>
+              <input type="file" id="lbPageFileInput" accept="image/*" style="display: none;">
+              
+              <!-- Sliders X/Y -->
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--color-muted);">
+                  <span>Posición Horizontal (X):</span> <strong id="lbPagePosXVal">50%</strong>
+                </div>
+                <input type="range" id="lbPageSliderX" min="0" max="100" value="50" style="width: 100%; accent-color: var(--color-primary);">
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--color-muted);">
+                  <span>Posición Vertical (Y):</span> <strong id="lbPagePosYVal">30%</strong>
+                </div>
+                <input type="range" id="lbPageSliderY" min="0" max="100" value="30" style="width: 100%; accent-color: var(--color-primary);">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos de Texto Dinámicos -->
+        <div id="lbPageDynamicFields" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Inyectado según la página -->
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px;">
+          <button type="button" class="btn btn-outline btn-sm" id="cancelLbPageModalBtn">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="saveLbPageModalBtn">💾 Guardar Cambios en Firestore</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Firebase SDKs (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=14"></script>
-  <script src="js/lookbook.js?v=14"></script>
-  <script src="js/customizer.js?v=14"></script>
-  <script src="js/app.js?v=14"></script>
-  <script src="js/testimonials.js?v=14"></script>
+  <script src="js/data.js?v=15"></script>
+  <script src="js/lookbook.js?v=15"></script>
+  <script src="js/customizer.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
+  <script src="js/testimonials.js?v=15"></script>
 </body>
 </html>
