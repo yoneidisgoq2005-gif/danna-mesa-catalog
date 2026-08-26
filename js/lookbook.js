@@ -51,13 +51,11 @@ class LookbookManager {
   }
 
   isAdminMode() {
+    // Limpiar residuos antiguos de localStorage para que la vista del cliente sea 100% limpia
+    try { localStorage.removeItem("danna_mesa_admin_unlocked"); } catch (e) {}
+
     const urlParams = new URLSearchParams(window.location.search);
-    return (
-      urlParams.get("admin") === "true" ||
-      urlParams.get("admin_preview") === "true" ||
-      localStorage.getItem("danna_mesa_admin_unlocked") === "true" ||
-      sessionStorage.getItem("danna_admin_authenticated") === "true"
-    );
+    return urlParams.get("admin") === "true" || urlParams.get("admin_preview") === "true";
   }
 
   initAdminControls() {

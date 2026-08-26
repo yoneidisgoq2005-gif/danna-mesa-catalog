@@ -1,8 +1,29 @@
 /**
  * Danna Mesa Studio — Catálogo Colección 2026
- * Datos centralizados y gestionables del catálogo.
- * Soporta persistencia en localStorage y exportación/importación JSON.
+ * Datos centralizados y gestionables del catálogo con sincronización Cloud Firestore en tiempo real.
  */
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAtDg0SFIyVI23-Ony28IKZhy9xDvaI8no",
+  authDomain: "danna-mesa-studio.firebaseapp.com",
+  projectId: "danna-mesa-studio",
+  storageBucket: "danna-mesa-studio.firebasestorage.app",
+  messagingSenderId: "709114044871",
+  appId: "1:709114044871:web:f7eea39cb714a20bf039e2",
+  measurementId: "G-2M73B5VMMT"
+};
+window.FIREBASE_CONFIG = FIREBASE_CONFIG;
+
+// Inicializar Firebase inmediatamente si los SDKs están presentes
+if (typeof firebase !== 'undefined') {
+  if (!firebase.apps || !firebase.apps.length) {
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    } catch (e) {
+      console.warn("Notice initializing firebase app in data.js:", e);
+    }
+  }
+}
 
 const DEFAULT_CATALOG_DATA = {
   studio: {
@@ -550,27 +571,33 @@ class CatalogState {
   }
 
   initCloudSync() {
-    // Si Firebase Firestore está disponible en la página, sincronizar en tiempo real desde la nube
     try {
-      if (typeof firebase !== "undefined" && firebase.firestore) {
-        const db = firebase.firestore();
-        db.collection("catalog_config").doc("main").onSnapshot((doc) => {
-          if (doc.exists) {
-            const cloudData = doc.data();
-            if (cloudData && typeof cloudData === "object") {
-              this.data = { ...DEFAULT_CATALOG_DATA, ...cloudData };
-              try {
-                localStorage.setItem(this.storageKey, JSON.stringify(this.data));
-              } catch (e) {}
-              window.dispatchEvent(new CustomEvent("catalogDataChanged", { detail: this.data }));
+      if (typeof firebase !== "undefined") {
+        if (!firebase.apps || !firebase.apps.length) {
+          firebase.initializeApp(window.FIREBASE_CONFIG || FIREBASE_CONFIG);
+        }
+        if (firebase.firestore) {
+          const db = firebase.firestore();
+          console.log("[CatalogState] Conectando sincronización en tiempo real con Firestore...");
+          db.collection("catalog_config").doc("main").onSnapshot((doc) => {
+            if (doc.exists) {
+              const cloudData = doc.data();
+              if (cloudData && typeof cloudData === "object") {
+                console.log("[CatalogState] ☁️ Datos actualizados desde la nube:", cloudData);
+                this.data = { ...DEFAULT_CATALOG_DATA, ...cloudData };
+                try {
+                  localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+                } catch (e) {}
+                window.dispatchEvent(new CustomEvent("catalogDataChanged", { detail: this.data }));
+              }
             }
-          }
-        }, (err) => {
-          console.warn("[CatalogState] Cloud sync listener notice:", err);
-        });
+          }, (err) => {
+            console.warn("[CatalogState] Firestore onSnapshot notice:", err);
+          });
+        }
       }
     } catch (e) {
-      console.warn("[CatalogState] Cloud init warning:", e);
+      console.warn("[CatalogState] Cloud init notice:", e);
     }
   }
 
@@ -601,18 +628,24 @@ class CatalogState {
   async saveToCloud(newData) {
     this.saveData(newData);
     try {
-      if (typeof firebase !== "undefined" && firebase.firestore) {
-        const db = firebase.firestore();
-        await db.collection("catalog_config").doc("main").set({
-          ...this.data,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        return true;
+      if (typeof firebase !== "undefined") {
+        if (!firebase.apps || !firebase.apps.length) {
+          firebase.initializeApp(window.FIREBASE_CONFIG || FIREBASE_CONFIG);
+        }
+        if (firebase.firestore) {
+          const db = firebase.firestore();
+          await db.collection("catalog_config").doc("main").set({
+            ...this.data,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          console.log("[CatalogState] ✓ Datos guardados con éxito en Firestore Cloud");
+          return true;
+        }
       }
     } catch (err) {
       console.warn("[CatalogState] Firestore cloud write notice:", err);
-      if (err && (err.code === "permission-denied" || err.message.includes("permissions"))) {
-        throw new Error("Para sincronizar en la nube entre múltiples dispositivos, recuerda configurar las reglas en tu consola de Firebase a 'allow read, write: if true;'. Tus cambios ya quedaron guardados y aplicados en este navegador.");
+      if (err && (err.code === "permission-denied" || (err.message && err.message.includes("permissions")))) {
+        throw new Error("Permisos de escritura pendientes en Firebase Console. Por favor verifica que en Firestore Database > Reglas esté 'allow read, write: if true;'. Tus cambios están guardados en este dispositivo.");
       }
       throw err;
     }

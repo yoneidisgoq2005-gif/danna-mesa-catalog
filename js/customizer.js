@@ -101,19 +101,22 @@ class CatalogCustomizer {
   }
 
   bindGlobalShortcuts() {
-    // 1. Mostrar botón ⚙️ si la URL tiene ?admin=true
+    // Limpiar residuos antiguos de localStorage
+    try { localStorage.removeItem("danna_mesa_admin_unlocked"); } catch (e) {}
+
+    // 1. Mostrar botón ⚙️ SÓLO si la URL tiene ?admin=true
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("admin") === "true" || localStorage.getItem("danna_mesa_admin_unlocked") === "true") {
-      const openBtn = document.getElementById("openCustomizerBtn");
+    const openBtn = document.getElementById("openCustomizerBtn");
+    if (urlParams.get("admin") === "true" || urlParams.get("admin_preview") === "true") {
       if (openBtn) openBtn.style.display = "inline-flex";
+    } else {
+      if (openBtn) openBtn.style.display = "none";
     }
 
     // 2. Atajo de teclado secreto: Alt + E o Ctrl + Shift + A
     window.addEventListener("keydown", (e) => {
       if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a") || (e.altKey && e.key.toLowerCase() === "e")) {
         e.preventDefault();
-        localStorage.setItem("danna_mesa_admin_unlocked", "true");
-        const openBtn = document.getElementById("openCustomizerBtn");
         if (openBtn) openBtn.style.display = "inline-flex";
         this.openModal();
       }
@@ -130,8 +133,6 @@ class CatalogCustomizer {
         clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
         if (clickCount >= 5) {
           clickCount = 0;
-          localStorage.setItem("danna_mesa_admin_unlocked", "true");
-          const openBtn = document.getElementById("openCustomizerBtn");
           if (openBtn) openBtn.style.display = "inline-flex";
           this.openModal();
         }
