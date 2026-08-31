@@ -579,11 +579,30 @@ class CatalogState {
         if (firebase.firestore) {
           const db = firebase.firestore();
           console.log("[CatalogState] Conectando sincronización en tiempo real con Firestore...");
-          db.collection("catalog_config").doc("main").onSnapshot((doc) => {
+          db.collection("catalog_config").doc("main").onSnapshot(async (doc) => {
             if (doc.exists) {
               const cloudData = doc.data();
               if (cloudData && typeof cloudData === "object") {
-                console.log("[CatalogState] ☁️ Datos actualizados desde la nube:", cloudData);
+                console.log("[CatalogState] ☁️ Datos actualizados desde la nube");
+
+                // Load overflow image docs
+                let overflowMap = {};
+                try {
+                  const overflowSnap = await db.collection("catalog_config")
+                    .where(firebase.firestore.FieldPath.documentId(), ">=", "images_")
+                    .where(firebase.firestore.FieldPath.documentId(), "<=", "images_\uf8ff")
+                    .get();
+                  overflowSnap.forEach(oDoc => {
+                    const oData = oDoc.data();
+                    Object.assign(overflowMap, oData);
+                  });
+                } catch (oErr) {
+                  console.warn("[CatalogState] No overflow images loaded:", oErr);
+                }
+
+                // Reassemble overflow references
+                this._reassembleOverflow(cloudData, overflowMap);
+
                 this.data = { ...DEFAULT_CATALOG_DATA, ...cloudData };
                 try {
                   localStorage.setItem(this.storageKey, JSON.stringify(this.data));
@@ -598,6 +617,50 @@ class CatalogState {
       }
     } catch (e) {
       console.warn("[CatalogState] Cloud init notice:", e);
+    }
+  }
+
+  _reassembleOverflow(data, overflowMap) {
+    if (!overflowMap || Object.keys(overflowMap).length === 0) return;
+
+    // Reassemble service images
+    if (Array.isArray(data.services)) {
+      data.services.forEach((srv) => {
+        if (srv.image && typeof srv.image === "string" && srv.image.startsWith("__overflow__:")) {
+          const key = srv.image.replace("__overflow__:", "");
+          if (overflowMap[key]) srv.image = overflowMap[key];
+        }
+        if (Array.isArray(srv.gallery)) {
+          srv.gallery.forEach((g) => {
+            if (g.src && typeof g.src === "string" && g.src.startsWith("__overflow__:")) {
+              const key = g.src.replace("__overflow__:", "");
+              if (overflowMap[key]) g.src = overflowMap[key];
+            }
+          });
+        }
+      });
+    }
+
+    // Reassemble hero/comboBanner
+    if (data.hero && data.hero.image && data.hero.image.startsWith("__overflow__:")) {
+      const key = data.hero.image.replace("__overflow__:", "");
+      if (overflowMap[key]) data.hero.image = overflowMap[key];
+    }
+    if (data.comboBanner && data.comboBanner.image && data.comboBanner.image.startsWith("__overflow__:")) {
+      const key = data.comboBanner.image.replace("__overflow__:", "");
+      if (overflowMap[key]) data.comboBanner.image = overflowMap[key];
+    }
+
+    // Reassemble testimonials
+    if (Array.isArray(data.testimonials)) {
+      data.testimonials.forEach((t) => {
+        const imgField = t.image ? "image" : "imageUrl";
+        const val = t[imgField];
+        if (val && typeof val === "string" && val.startsWith("__overflow__:")) {
+          const key = val.replace("__overflow__:", "");
+          if (overflowMap[key]) t[imgField] = overflowMap[key];
+        }
+      });
     }
   }
 
@@ -634,16 +697,91 @@ class CatalogState {
         }
         if (firebase.firestore) {
           const db = firebase.firestore();
+          const payload = JSON.parse(JSON.stringify(this.data));
+
+          // Estimate size and strip heavy base64 images into overflow doc
+          const overflowImages = {};
+          const MAX_B64_LEN = 30000; // ~22KB per image max inline
+
+          // Strip service images
+          if (Array.isArray(payload.services)) {
+            payload.services.forEach((srv, si) => {
+              if (srv.image && srv.image.startsWith("data:") && srv.image.length > MAX_B64_LEN) {
+                overflowImages[`srv_${si}_image`] = srv.image;
+                srv.image = `__overflow__:srv_${si}_image`;
+              }
+              if (Array.isArray(srv.gallery)) {
+                srv.gallery.forEach((g, gi) => {
+                  if (g.src && g.src.startsWith("data:") && g.src.length > MAX_B64_LEN) {
+                    overflowImages[`srv_${si}_gal_${gi}`] = g.src;
+                    g.src = `__overflow__:srv_${si}_gal_${gi}`;
+                  }
+                });
+              }
+            });
+          }
+
+          // Strip hero/comboBanner images
+          if (payload.hero && payload.hero.image && payload.hero.image.startsWith("data:") && payload.hero.image.length > MAX_B64_LEN) {
+            overflowImages["hero_image"] = payload.hero.image;
+            payload.hero.image = "__overflow__:hero_image";
+          }
+          if (payload.comboBanner && payload.comboBanner.image && payload.comboBanner.image.startsWith("data:") && payload.comboBanner.image.length > MAX_B64_LEN) {
+            overflowImages["comboBanner_image"] = payload.comboBanner.image;
+            payload.comboBanner.image = "__overflow__:comboBanner_image";
+          }
+
+          // Strip testimonial images
+          if (Array.isArray(payload.testimonials)) {
+            payload.testimonials.forEach((t, ti) => {
+              const imgKey = t.image || t.imageUrl;
+              const imgField = t.image ? "image" : "imageUrl";
+              if (imgKey && imgKey.startsWith("data:") && imgKey.length > MAX_B64_LEN) {
+                overflowImages[`test_${ti}`] = imgKey;
+                t[imgField] = `__overflow__:test_${ti}`;
+              }
+            });
+          }
+
+          // Write main doc
           await db.collection("catalog_config").doc("main").set({
-            ...this.data,
+            ...payload,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
-          console.log("[CatalogState] ✓ Datos guardados con éxito en Firestore Cloud");
+
+          // Write overflow images in chunks (each doc max ~900KB)
+          const overflowKeys = Object.keys(overflowImages);
+          if (overflowKeys.length > 0) {
+            const CHUNK_MAX = 800000; // ~800KB per overflow doc
+            let chunkIdx = 0;
+            let currentChunk = {};
+            let currentSize = 0;
+
+            for (const key of overflowKeys) {
+              const valSize = overflowImages[key].length;
+              if (currentSize + valSize > CHUNK_MAX && currentSize > 0) {
+                await db.collection("catalog_config").doc(`images_${chunkIdx}`).set(currentChunk);
+                chunkIdx++;
+                currentChunk = {};
+                currentSize = 0;
+              }
+              currentChunk[key] = overflowImages[key];
+              currentSize += valSize;
+            }
+            if (Object.keys(currentChunk).length > 0) {
+              await db.collection("catalog_config").doc(`images_${chunkIdx}`).set(currentChunk);
+            }
+          }
+
+          console.log(`[CatalogState] ✓ Datos guardados en Firestore (${overflowKeys.length} imágenes en overflow)`);
           return true;
         }
       }
     } catch (err) {
       console.warn("[CatalogState] Firestore cloud write notice:", err);
+      if (err && err.message && err.message.includes("exceeds the maximum allowed size")) {
+        throw new Error("Error al guardar: El documento excede 1MB. Intenta reducir la cantidad de fotos de clientas o usa imágenes más pequeñas.");
+      }
       if (err && (err.code === "permission-denied" || (err.message && err.message.includes("permissions")))) {
         throw new Error("Permisos de escritura pendientes en Firebase Console. Por favor verifica que en Firestore Database > Reglas esté 'allow read, write: if true;'. Tus cambios están guardados en este dispositivo.");
       }

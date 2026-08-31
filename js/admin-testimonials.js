@@ -294,7 +294,7 @@
         this.dropzoneBox.addEventListener("click", () => this.screenshotFileInput.click());
         this.screenshotFileInput.addEventListener("change", (e) => {
           if (e.target.files && e.target.files[0]) {
-            this.compressImage(e.target.files[0], 1100, 0.82, (base64) => {
+            this.compressImage(e.target.files[0], 800, 0.60, (base64) => {
               this.currentTestimonialBase64 = base64;
               this.screenshotPreviewImg.src = base64;
               this.screenshotPreviewImg.style.display = "block";
@@ -329,7 +329,7 @@
         this.serviceDropzoneBox.addEventListener("click", () => this.serviceFileInput.click());
         this.serviceFileInput.addEventListener("change", (e) => {
           if (e.target.files && e.target.files[0]) {
-            this.compressImage(e.target.files[0], 1200, 0.84, (base64) => {
+            this.compressImage(e.target.files[0], 800, 0.60, (base64) => {
               this.currentServiceBase64 = base64;
               this.servicePreviewImg.src = base64;
               this.servicePreviewImg.style.display = "block";
@@ -880,7 +880,7 @@
       const file = e.target.files[0];
       const photo = this.targetPhotoChangeItem;
 
-      this.compressImage(file, 1200, 0.85, async (compressedBase64) => {
+      this.compressImage(file, 800, 0.60, async (compressedBase64) => {
         if (photo.type === "hero") {
           this.state.data.hero.image = compressedBase64;
         } else if (photo.type === "comboBanner") {
@@ -1041,7 +1041,7 @@
       if (!e.target.files || !e.target.files[0]) return;
       const file = e.target.files[0];
 
-      this.compressImage(file, 1200, 0.85, (compressedBase64) => {
+      this.compressImage(file, 800, 0.60, (compressedBase64) => {
         const itemNumber = this.currentEditingServiceGallery.length + 1;
         const newItem = {
           id: "g_" + Date.now(),
