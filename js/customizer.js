@@ -700,7 +700,7 @@ class CatalogCustomizer {
         uploadInput.addEventListener("change", (e) => {
           const file = e.target.files[0];
           if (file) {
-            this.compressImageFile(file, 1200, 0.85, (optimizedBase64) => {
+            this.compressImageFile(file, 800, 0.65, (optimizedBase64) => {
               imgPreview.src = optimizedBase64;
               if (imgUrlInput) imgUrlInput.value = optimizedBase64;
               currentService.image = optimizedBase64;
@@ -818,7 +818,7 @@ class CatalogCustomizer {
         heroUpload.addEventListener("change", (e) => {
           const file = e.target.files[0];
           if (file) {
-            this.compressImageFile(file, 1400, 0.85, (optimizedBase64) => {
+            this.compressImageFile(file, 800, 0.65, (optimizedBase64) => {
               heroImgPreview.src = optimizedBase64;
               if (!data.hero) data.hero = {};
               data.hero.image = optimizedBase64;
@@ -932,7 +932,7 @@ class CatalogCustomizer {
         comboUpload.addEventListener("change", (e) => {
           const file = e.target.files[0];
           if (file) {
-            this.compressImageFile(file, 1200, 0.85, (optimizedBase64) => {
+            this.compressImageFile(file, 800, 0.65, (optimizedBase64) => {
               comboImgPreview.src = optimizedBase64;
               if (!data.comboBanner) data.comboBanner = {};
               data.comboBanner.image = optimizedBase64;
@@ -1205,7 +1205,7 @@ class CatalogCustomizer {
     const file = event.target.files[0];
     if (!file) return;
 
-    this.compressImageFile(file, 1200, 0.85, (optimizedBase64) => {
+    this.compressImageFile(file, 800, 0.65, (optimizedBase64) => {
       const img = document.getElementById(`masterImg_${photoKey}`);
       if (img) img.src = optimizedBase64;
 
@@ -1260,21 +1260,27 @@ class CatalogCustomizer {
     }
   }
 
-  compressImageFile(file, maxDimension, quality, callback) {
+  compressImageFile(file, maxDimension = 800, quality = 0.65, callback) {
+    if (!file || !file.type || !file.type.startsWith("image/")) {
+      alert("Por favor selecciona un archivo de imagen válido.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        let width = img.width;
-        let height = img.height;
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+        const maxDim = maxDimension || 800;
+        const q = quality || 0.65;
 
-        if (width > maxDimension || height > maxDimension) {
+        if (width > maxDim || height > maxDim) {
           if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
           } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
           }
         }
 
@@ -1284,8 +1290,11 @@ class CatalogCustomizer {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        const dataUrl = canvas.toDataURL("image/jpeg", q);
         callback(dataUrl);
+      };
+      img.onerror = () => {
+        alert("No se pudo procesar la imagen seleccionada.");
       };
       img.src = e.target.result;
     };

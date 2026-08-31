@@ -680,40 +680,85 @@ class CatalogState {
     this.data = newData;
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.data));
-      window.dispatchEvent(new CustomEvent("catalogDataChanged", { detail: this.data }));
-      return true;
     } catch (e) {
-      console.error("Error al guardar datos:", e);
-      return false;
+      console.warn("[CatalogState] Almacenamiento local lleno, guardando versión ligera en localStorage:", e);
+      try {
+        // Create a lightweight copy without large base64 strings for localStorage
+        const lightCopy = JSON.parse(JSON.stringify(this.data));
+        if (Array.isArray(lightCopy.services)) {
+          lightCopy.services.forEach(s => {
+            if (s.image && s.image.startsWith("data:")) s.image = "assets/img/page_img_1.jpeg";
+            if (Array.isArray(s.gallery)) s.gallery = [];
+          });
+        }
+        if (lightCopy.hero && lightCopy.hero.image && lightCopy.hero.image.startsWith("data:")) lightCopy.hero.image = "assets/img/page_img_1.jpeg";
+        if (lightCopy.comboBanner && lightCopy.comboBanner.image && lightCopy.comboBanner.image.startsWith("data:")) lightCopy.comboBanner.image = "assets/img/page_img_25.png";
+        if (Array.isArray(lightCopy.testimonials)) {
+          lightCopy.testimonials.forEach(t => {
+            if (t.image && t.image.startsWith("data:")) t.image = "assets/img/page_img_1.jpeg";
+            if (t.imageUrl && t.imageUrl.startsWith("data:")) t.imageUrl = "assets/img/page_img_1.jpeg";
+          });
+        }
+        localStorage.setItem(this.storageKey, JSON.stringify(lightCopy));
+      } catch (err2) {
+        console.warn("[CatalogState] No se pudo guardar en localStorage, el estado en memoria y la nube continúan:", err2);
+      }
     }
+    window.dispatchEvent(new CustomEvent("catalogDataChanged", { detail: this.data }));
+    return true;
   }
 
   /** Recompress a base64 image string to smaller dimensions/quality using canvas */
-  _shrinkBase64(base64Str, maxDim, quality) {
+  _shrinkBase64(base64Str, maxDim = 700, quality = 0.60) {
     return new Promise((resolve) => {
-      if (!base64Str || !base64Str.startsWith("data:")) { resolve(base64Str); return; }
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let w = img.width, h = img.height;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-          else { w = Math.round(w * maxDim / h); h = maxDim; }
-        }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.onerror = () => resolve(base64Str);
-      img.src = base64Str;
+      if (!base64Str || typeof base64Str !== "string" || !base64Str.startsWith("data:")) {
+        resolve(base64Str);
+        return;
+      }
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) { settled = true; resolve(base64Str); }
+      }, 2000);
+
+      try {
+        const img = new Image();
+        img.onload = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          try {
+            const canvas = document.createElement("canvas");
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (!w || !h) { resolve(base64Str); return; }
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+              else { w = Math.round(w * maxDim / h); h = maxDim; }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          } catch (cErr) {
+            resolve(base64Str);
+          }
+        };
+        img.onerror = () => {
+          if (!settled) { settled = true; clearTimeout(timer); resolve(base64Str); }
+        };
+        img.src = base64Str;
+      } catch (e) {
+        if (!settled) { settled = true; clearTimeout(timer); resolve(base64Str); }
+      }
     });
   }
 
   /** Shrink all base64 images in payload to keep total under Firestore 1MB limit */
   async _shrinkPayloadImages(payload) {
-    const MAX_LEN = 40000; // ~30KB threshold per image
-    const SHRINK_DIM = 600;
-    const SHRINK_Q = 0.50;
+    const MAX_LEN = 30000; // ~22KB threshold per image
+    const SHRINK_DIM = 700;
+    const SHRINK_Q = 0.60;
 
     const promises = [];
 

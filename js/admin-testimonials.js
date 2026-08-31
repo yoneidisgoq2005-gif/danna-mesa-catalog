@@ -1548,7 +1548,7 @@
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
 
-          const compressed = canvas.toDataURL("image/jpeg", quality || 0.82);
+          const compressed = canvas.toDataURL("image/jpeg", quality || 0.65);
           callback(compressed);
         };
         img.src = event.target.result;
