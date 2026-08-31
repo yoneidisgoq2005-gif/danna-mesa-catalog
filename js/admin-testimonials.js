@@ -217,13 +217,13 @@
 
       // Forms
       this.heroBannerForm = document.getElementById("heroBannerForm");
-      this.policiesForm = document.getElementById("policiesForm");
-      this.studioForm = document.getElementById("studioForm");
-      this.lookbookConfigForm = document.getElementById("lookbookConfigForm");
-      this.btnReloadLookbookPreview = document.getElementById("btnReloadLookbookPreview");
-
-      // Lookbook Iframe
+      // Lookbook Studio Elements & Iframe
+      this.adminLbPageSelector = document.getElementById("adminLbPageSelector");
+      this.adminLbDynamicPageForm = document.getElementById("adminLbDynamicPageForm");
+      this.adminLbPageEditorContainer = document.getElementById("adminLbPageEditorContainer");
+      this.btnSaveAdminLbPage = document.getElementById("btnSaveAdminLbPage");
       this.adminLookbookIframe = document.getElementById("adminLookbookIframe");
+      this.adminLbBase64Uploads = {};
 
       // Cloud Sync & Backups
       this.btnPushAllToCloud = document.getElementById("btnPushAllToCloud");
@@ -366,6 +366,15 @@
       }
       if (this.studioForm) {
         this.studioForm.addEventListener("submit", (e) => this.handleSaveStudio(e));
+      }
+      // Lookbook Studio Events
+      if (this.adminLbPageSelector) {
+        this.adminLbPageSelector.addEventListener("change", (e) => {
+          this.renderAdminLbPageEditor(e.target.value);
+        });
+      }
+      if (this.adminLbDynamicPageForm) {
+        this.adminLbDynamicPageForm.addEventListener("submit", (e) => this.handleSaveAdminLbPage(e));
       }
       if (this.lookbookConfigForm) {
         this.lookbookConfigForm.addEventListener("submit", (e) => this.handleSaveLookbookConfig(e));
@@ -1306,22 +1315,8 @@
       // Lookbook Editorial Config
       if (data.lookbook) {
         const lb = data.lookbook;
-        if (document.getElementById("lbFormCoverTitle")) document.getElementById("lbFormCoverTitle").value = lb.coverTitle || (data.studio ? data.studio.name : "") || "";
-        if (document.getElementById("lbFormCoverSubtitle")) document.getElementById("lbFormCoverSubtitle").value = lb.coverSubtitle || "Catálogo Colección 2026";
-        if (document.getElementById("lbFormCoverYear")) document.getElementById("lbFormCoverYear").value = lb.coverYear || "2026";
-        if (document.getElementById("lbFormWelcomeLead")) document.getElementById("lbFormWelcomeLead").value = lb.welcomeLead || (data.hero ? data.hero.welcomeLead : "") || "";
-        if (document.getElementById("lbFormWelcomeText")) document.getElementById("lbFormWelcomeText").value = lb.welcomeText || (data.hero ? data.hero.welcomeText : "") || "";
-        if (document.getElementById("lbFormLiftingTitle")) document.getElementById("lbFormLiftingTitle").value = lb.liftingDividerTitle || "Lifting";
-        if (document.getElementById("lbFormLiftingQuote")) document.getElementById("lbFormLiftingQuote").value = lb.liftingDividerQuote || "El servicio insignia";
-        if (document.getElementById("lbFormExtTitle")) document.getElementById("lbFormExtTitle").value = lb.extensionsDividerTitle || "Extensiones";
-        if (document.getElementById("lbFormExtQuote")) document.getElementById("lbFormExtQuote").value = lb.extensionsDividerQuote || "La mirada que siempre imaginaste.";
-        if (document.getElementById("lbFormCejasTitle")) document.getElementById("lbFormCejasTitle").value = lb.cejasDividerTitle || "Cejas";
-        if (document.getElementById("lbFormCejasQuote")) document.getElementById("lbFormCejasQuote").value = lb.cejasDividerQuote || "Un diseño pensado para tu rostro.";
-        if (document.getElementById("lbFormLipsTitle")) document.getElementById("lbFormLipsTitle").value = lb.hydralipsDividerTitle || "HydraLips";
-        if (document.getElementById("lbFormLipsQuote")) document.getElementById("lbFormLipsQuote").value = lb.hydralipsDividerQuote || "Tus labios en su mejor versión.";
-        if (document.getElementById("lbFormBackTitle")) document.getElementById("lbFormBackTitle").value = lb.backCoverTitle || (data.studio ? data.studio.name : "Danna Mesa Studio");
-        if (document.getElementById("lbFormBackQuote")) document.getElementById("lbFormBackQuote").value = lb.backCoverQuote || "Tu mirada, nuestro sello.";
-        if (document.getElementById("lbFormBackCta")) document.getElementById("lbFormBackCta").value = lb.backCoverCta || "Una experiencia creada para resaltar tu esencia natural.";
+        // Lookbook Studio Pages
+        this.populateLookbookPageSelector();
       }
     }
 
@@ -1392,36 +1387,747 @@
       }
     }
 
+    // ================= LOOKBOOK STUDIO PAGE EDITOR =================
+    getLookbookPagesList() {
+      const data = this.state.data;
+      const pages = [
+        { key: "p1_cover", pageNum: 1, label: "Portada Principal (Hero)", type: "cover" },
+        { key: "p2_welcome", pageNum: 2, label: "Bienvenida Editorial", type: "welcome" },
+        { key: "p3_studio", pageNum: 3, label: "Studio Experience", type: "studio" },
+        { key: "p4_lifting_divider", pageNum: 4, label: "Separador Lifting", type: "divider", divKey: "lifting" },
+        { key: "p5_lifting_service", pageNum: 5, label: "Lifting de Pestañas Coreano", type: "service", serviceId: "lifting-coreano" },
+        { key: "p6_lifting_evidence", pageNum: 6, label: "Galería Resultados Lifting (3 Clientas)", type: "evidence", serviceId: "lifting-coreano" },
+        { key: "p7_ext_divider", pageNum: 7, label: "Separador Extensiones", type: "divider", divKey: "extensions" }
+      ];
+
+      let pNum = 8;
+      const extServices = (data.services || []).filter(s => s.categoryId === "extensiones");
+      for (let i = 0; i < extServices.length; i += 2) {
+        const s1 = extServices[i];
+        const s2 = extServices[i + 1];
+        if (s1 && s2) {
+          pages.push({
+            key: `p_ext_${s1.id}_${s2.id}`,
+            pageNum: pNum,
+            label: `${s1.name} & ${s2.name} (2 Efectos)`,
+            type: "two_services",
+            s1: s1.id,
+            s2: s2.id
+          });
+        } else if (s1) {
+          pages.push({
+            key: `p_ext_${s1.id}`,
+            pageNum: pNum,
+            label: `${s1.name} (1 Efecto)`,
+            type: "service",
+            serviceId: s1.id
+          });
+        }
+        pNum++;
+      }
+
+      pages.push({ key: "p14_policies", pageNum: pNum, label: "Políticas de Retoque", type: "policies" });
+      pNum++;
+
+      pages.push({ key: "p15_cejas_divider", pageNum: pNum, label: "Separador Cejas", type: "divider", divKey: "cejas" });
+      pNum++;
+
+      const browServices = (data.services || []).filter(s => s.categoryId === "cejas");
+      for (let i = 0; i < browServices.length; i += 2) {
+        const s1 = browServices[i];
+        const s2 = browServices[i + 1];
+        if (s1 && s2) {
+          pages.push({
+            key: `p_cejas_${s1.id}_${s2.id}`,
+            pageNum: pNum,
+            label: `${s1.name} & ${s2.name} (2 Efectos)`,
+            type: "two_services",
+            s1: s1.id,
+            s2: s2.id
+          });
+        } else if (s1) {
+          pages.push({
+            key: `p_cejas_${s1.id}`,
+            pageNum: pNum,
+            label: `${s1.name} (1 Efecto)`,
+            type: "service",
+            serviceId: s1.id
+          });
+        }
+        pNum++;
+      }
+
+      pages.push({ key: "p17_lips_divider", pageNum: pNum, label: "Separador HydraLips", type: "divider", divKey: "hydralips" });
+      pNum++;
+
+      const hydra = (data.services || []).find(s => s.categoryId === "hydralips");
+      pages.push({
+        key: "p18_hydralips_service",
+        pageNum: pNum,
+        label: "HydraLips Hidratación Labial",
+        type: "service",
+        serviceId: hydra ? hydra.id : "hydralips-sesion"
+      });
+      pNum++;
+
+      pages.push({ key: "p19_combos", pageNum: pNum, label: "Experiencias & Rituales (Combos)", type: "combos" });
+      pNum++;
+
+      pages.push({ key: "p20_backcover", pageNum: pNum, label: "Contraportada & Contacto", type: "backcover" });
+
+      return pages;
+    }
+
+    populateLookbookPageSelector() {
+      const selector = document.getElementById("adminLbPageSelector");
+      if (!selector) return;
+
+      const pages = this.getLookbookPagesList();
+      const currentVal = selector.value || (pages[0] ? pages[0].key : "");
+
+      selector.innerHTML = pages.map(p => `
+        <option value="${p.key}">Página ${p.pageNum < 10 ? '0' + p.pageNum : p.pageNum} — ${p.label}</option>
+      `).join("");
+
+      if (pages.some(p => p.key === currentVal)) {
+        selector.value = currentVal;
+      } else if (pages[0]) {
+        selector.value = pages[0].key;
+      }
+
+      this.renderAdminLbPageEditor(selector.value);
+    }
+
+    renderAdminLbPageEditor(pageKey) {
+      const container = document.getElementById("adminLbPageEditorContainer");
+      if (!container) return;
+
+      this.adminLbBase64Uploads = {};
+      const data = this.state.data;
+      const lb = data.lookbook || {};
+      let html = "";
+
+      // 1. PORTADA
+      if (pageKey === "p1_cover") {
+        const coverImg = (data.hero && data.hero.image) ? data.hero.image : "assets/img/page_img_1.jpeg";
+        const { posX, posY } = this.parsePosition((data.hero && data.hero.imagePosition) ? data.hero.imagePosition : "center 20%");
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🌟 Página 01 · Portada Principal (Hero)</h3>
+          
+          <div style="display: flex; gap: 16px; align-items: center; background: var(--admin-surface-input); padding: 14px; border-radius: var(--admin-radius); border: 1px solid var(--admin-border); margin-bottom: 14px;">
+            <div style="width: 110px; height: 110px; border-radius: 8px; overflow: hidden; background: #000; flex-shrink: 0;">
+              <img id="admin_img_preview_cover" src="${coverImg}" style="width:100%; height:100%; object-fit:cover; object-position: ${posX}% ${posY}%;" alt="Portada">
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+              <label class="admin-btn admin-btn-secondary" style="align-self: flex-start; cursor: pointer; padding: 6px 12px; font-size: 12px;">
+                🔄 Cambiar Foto de Portada
+                <input type="file" accept="image/*" style="display: none;" onchange="window.adminApp.handleAdminLbPhotoUpload('cover', event)">
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--admin-text-muted);">Horizontal (X): <b id="admin_val_x_cover">${posX}%</b></span>
+                  <input type="range" id="admin_slider_x_cover" min="0" max="100" value="${posX}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('cover')">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--admin-text-muted);">Vertical (Y): <b id="admin_val_y_cover">${posY}%</b></span>
+                  <input type="range" id="admin_slider_y_cover" min="0" max="100" value="${posY}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('cover')">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="admin-form-group">
+              <label class="admin-form-label">Título de Portada</label>
+              <input type="text" id="admin_lb_coverTitle" class="admin-form-input" value="${lb.coverTitle || (data.studio ? data.studio.name : '') || ''}">
+            </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Subtítulo de Portada</label>
+              <input type="text" id="admin_lb_coverSubtitle" class="admin-form-input" value="${lb.coverSubtitle || 'Catálogo Colección 2026'}">
+            </div>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Año / Colección</label>
+            <input type="text" id="admin_lb_coverYear" class="admin-form-input" value="${lb.coverYear || '2026'}">
+          </div>
+        `;
+      }
+      // 2. BIENVENIDA
+      else if (pageKey === "p2_welcome") {
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📜 Página 02 · Bienvenida Editorial</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Kicker Superior</label>
+            <input type="text" id="admin_lb_welcomeKicker" class="admin-form-input" value="${lb.welcomeKicker || '01 · Bienvenida'}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título de Bienvenida</label>
+            <input type="text" id="admin_lb_welcomeTitle" class="admin-form-input" value="${lb.welcomeTitle || 'Bienvenida'}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Manifiesto de Bienvenida</label>
+            <textarea id="admin_lb_welcomeLead" class="admin-form-textarea" rows="3">${lb.welcomeLead || (data.studio ? data.studio.welcomeLead : '') || ''}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Mensaje de Confianza</label>
+            <textarea id="admin_lb_welcomeText" class="admin-form-textarea" rows="2">${lb.welcomeText || (data.studio ? data.studio.welcomeText : '') || ''}</textarea>
+          </div>
+        `;
+      }
+      // 3. STUDIO EXPERIENCE
+      else if (pageKey === "p3_studio") {
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🏢 Página 03 · Studio Experience</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título</label>
+            <input type="text" id="admin_lb_studioTitle" class="admin-form-input" value="${lb.studioTitle || 'Studio Experience'}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Frase / Slogan de Marca</label>
+            <input type="text" id="admin_lb_studioQuote" class="admin-form-input" value="${lb.studioQuote || (data.studio ? data.studio.slogan : '') || 'Tu mirada, nuestro sello.'}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Descripción de la Experiencia</label>
+            <textarea id="admin_lb_studioDesc" class="admin-form-textarea" rows="3">${lb.studioDesc || 'Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.'}</textarea>
+          </div>
+        `;
+      }
+      // 4. DIVIDERS
+      else if (pageKey.includes("divider")) {
+        const isLift = pageKey.includes("lifting");
+        const isExt = pageKey.includes("ext");
+        const isCejas = pageKey.includes("cejas");
+        const isLips = pageKey.includes("lips");
+
+        let defTitle = isLift ? lb.liftingDividerTitle || "Lifting" : (isExt ? lb.extensionsDividerTitle || "Extensiones" : (isCejas ? lb.cejasDividerTitle || "Cejas" : lb.hydralipsDividerTitle || "HydraLips"));
+        let defQuote = isLift ? lb.liftingDividerQuote || "El servicio insignia" : (isExt ? lb.extensionsDividerQuote || "La mirada que siempre imaginaste." : (isCejas ? lb.cejasDividerQuote || "Un diseño pensado para tu rostro." : lb.hydralipsDividerQuote || "Tus labios en su mejor versión."));
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">✨ Separador de Colección (${defTitle})</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título del Separador</label>
+            <input type="text" id="admin_lb_dividerTitle" class="admin-form-input" value="${defTitle}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Frase / Cita de Colección</label>
+            <input type="text" id="admin_lb_dividerQuote" class="admin-form-input" value="${defQuote}">
+          </div>
+        `;
+      }
+      // 5. GALERÍA DE RESULTADOS LIFTING (3 CLIENTAS)
+      else if (pageKey === "p6_lifting_evidence") {
+        const liftingService = data.services.find(s => s.id === "lifting-coreano") || data.services[0];
+        const gallery = (liftingService && liftingService.gallery) ? liftingService.gallery : [];
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📸 Página 06 · Galería de Resultados Lifting (3 Clientas)</h3>
+          <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 14px;">Modifica las 3 fotos reales de clientas con sus títulos, subtítulos y encuadres:</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            ${[0, 1, 2].map(idx => {
+              const g = gallery[idx] || { src: `assets/img/lifting_${idx+1}.jpeg`, title: `Resultado 0${idx+1}`, subtitle: "", position: "50% 30%" };
+              const { posX, posY } = this.parsePosition(g.position);
+              return `
+                <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px;">
+                  <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--admin-primary); display: block; margin-bottom: 8px;">
+                    Clienta 0${idx + 1}
+                  </span>
+                  <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 12px;">
+                    <div style="width: 80px; height: 80px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
+                      <img id="admin_img_preview_lift_g_${idx}" src="${g.src}" style="width:100%; height:100%; object-fit:cover; object-position: ${posX}% ${posY}%;" alt="Clienta ${idx+1}">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                      <label class="admin-btn admin-btn-secondary" style="align-self: flex-start; cursor: pointer; padding: 4px 10px; font-size: 11px;">
+                        🔄 Cambiar Foto
+                        <input type="file" accept="image/*" style="display: none;" onchange="window.adminApp.handleAdminLbPhotoUpload('lift_g_${idx}', event)">
+                      </label>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                          <span style="font-size: 10px; color: var(--admin-text-muted);">X: <b id="admin_val_x_lift_g_${idx}">${posX}%</b></span>
+                          <input type="range" id="admin_slider_x_lift_g_${idx}" min="0" max="100" value="${posX}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('lift_g_${idx}')">
+                        </div>
+                        <div>
+                          <span style="font-size: 10px; color: var(--admin-text-muted);">Y: <b id="admin_val_y_lift_g_${idx}">${posY}%</b></span>
+                          <input type="range" id="admin_slider_y_lift_g_${idx}" min="0" max="100" value="${posY}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('lift_g_${idx}')">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Título</label>
+                      <input type="text" id="admin_lift_g_title_${idx}" class="admin-form-input" value="${g.title || `Resultado 0${idx+1}`}">
+                    </div>
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Subtítulo / Efecto</label>
+                      <input type="text" id="admin_lift_g_sub_${idx}" class="admin-form-input" value="${g.subtitle || ''}">
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }
+      // 6. COMBOS & EXPERIENCIAS (PÁGINA 20)
+      else if (pageKey === "p19_combos") {
+        const comboBanner = data.comboBanner || {};
+        const expServices = data.services.filter(s => s.categoryId === "experiencias");
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">⭐ Experiencias & Rituales (Combos)</h3>
+          
+          <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px; margin-bottom: 16px;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--admin-primary); display: block; margin-bottom: 8px;">Banner Principal de la Página</span>
+            <div class="admin-form-group" style="margin-bottom: 10px;">
+              <label class="admin-form-label">Título del Banner</label>
+              <input type="text" id="admin_combo_bannerTitle" class="admin-form-input" value="${comboBanner.title || 'Experiencias & Rituales'}">
+            </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Descripción General</label>
+              <textarea id="admin_combo_bannerDesc" class="admin-form-textarea" rows="2">${comboBanner.desc || ''}</textarea>
+            </div>
+          </div>
+
+          <div style="font-size: 13px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase; margin-bottom: 10px;">✨ Combos Incluidos en la Página:</div>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            ${expServices.map((exp, idx) => `
+              <div style="background: var(--admin-surface-card); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px;">
+                <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--admin-text-main); display: block; margin-bottom: 8px;">Combo 0${idx + 1}: ${exp.name}</span>
+                <input type="hidden" id="admin_exp_id_${idx}" value="${exp.id}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                  <div>
+                    <label class="admin-form-label" style="font-size: 10px;">Nombre</label>
+                    <input type="text" id="admin_exp_name_${idx}" class="admin-form-input" value="${exp.name}">
+                  </div>
+                  <div>
+                    <label class="admin-form-label" style="font-size: 10px;">Subtítulo / Beneficio</label>
+                    <input type="text" id="admin_exp_sub_${idx}" class="admin-form-input" value="${exp.subtitle || ''}">
+                  </div>
+                </div>
+                <div class="admin-form-group" style="margin-bottom: 8px;">
+                  <label class="admin-form-label" style="font-size: 10px;">Descripción</label>
+                  <textarea id="admin_exp_desc_${idx}" class="admin-form-textarea" rows="2">${exp.desc || ''}</textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div>
+                    <label class="admin-form-label" style="font-size: 10px;">Precio Fijo (COP)</label>
+                    <input type="number" id="admin_exp_price_${idx}" class="admin-form-input" value="${exp.price || ''}" placeholder="Opcional">
+                  </div>
+                  <div>
+                    <label class="admin-form-label" style="font-size: 10px;">Tarifa Dinámica (Texto)</label>
+                    <input type="text" id="admin_exp_customLabel_${idx}" class="admin-form-input" value="${exp.customPriceLabel || ''}" placeholder="Ej: Según pestañas elegidas">
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+      // 7. POLÍTICAS DE RETOQUE
+      else if (pageKey === "p14_policies") {
+        const pol = data.retouchPolicies || {};
+        const condStr = Array.isArray(pol.conditions) ? pol.conditions.join("\n") : "";
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📋 Página · Políticas de Retoque</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título de la Sección</label>
+            <input type="text" id="admin_lb_polTitle" class="admin-form-input" value="${pol.title || 'Políticas de retoque'}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Subtítulo / Introducción</label>
+            <textarea id="admin_lb_polSub" class="admin-form-textarea" rows="2">${pol.subtitle || ''}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Condiciones (Una por línea)</label>
+            <textarea id="admin_lb_polConditions" class="admin-form-textarea" rows="4">${condStr}</textarea>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Nota Aclaratoria</label>
+            <input type="text" id="admin_lb_polNote" class="admin-form-input" value="${pol.note || ''}">
+          </div>
+        `;
+      }
+      // 8. CONTRAPORTADA & CONTACTO
+      else if (pageKey === "p20_backcover") {
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">👑 Contraportada & Cierre Editorial</h3>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título de Marca</label>
+            <input type="text" id="admin_lb_backTitle" class="admin-form-input" value="${lb.backCoverTitle || (data.studio ? data.studio.name : 'Danna Mesa Studio')}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Frase / Cita de Cierre</label>
+            <input type="text" id="admin_lb_backQuote" class="admin-form-input" value="${lb.backCoverQuote || (data.studio ? data.studio.slogan : 'Tu mirada, nuestro sello.')}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Mensaje Final / Llamado a la Acción</label>
+            <textarea id="admin_lb_backCta" class="admin-form-textarea" rows="2">${lb.backCoverCta || 'Una experiencia creada para resaltar tu esencia natural.'}</textarea>
+          </div>
+        `;
+      }
+      // 9. SERVICIOS (1 O 2 EFECTOS CON FOTOS, ENCUADRES, TEXTOS Y PRECIOS COMPLETOS)
+      else {
+        let targetServices = [];
+        const pages = this.getLookbookPagesList();
+        const pEntry = pages.find(p => p.key === pageKey);
+
+        if (pEntry && pEntry.s1 && pEntry.s2) {
+          const s1 = data.services.find(x => x.id === pEntry.s1);
+          const s2 = data.services.find(x => x.id === pEntry.s2);
+          if (s1) targetServices.push(s1);
+          if (s2) targetServices.push(s2);
+        } else if (pEntry && pEntry.serviceId) {
+          const s = data.services.find(x => x.id === pEntry.serviceId);
+          if (s) targetServices.push(s);
+        } else if (pageKey.startsWith("p_ext_")) {
+          const parts = pageKey.replace("p_ext_", "").split("_");
+          parts.forEach(id => {
+            const s = data.services.find(x => x.id === id);
+            if (s && !targetServices.some(t => t.id === s.id)) targetServices.push(s);
+          });
+        } else if (pageKey.startsWith("p_cejas_")) {
+          const parts = pageKey.replace("p_cejas_", "").split("_");
+          parts.forEach(id => {
+            const s = data.services.find(x => x.id === id);
+            if (s && !targetServices.some(t => t.id === s.id)) targetServices.push(s);
+          });
+        }
+
+        if (targetServices.length === 0) {
+          targetServices.push(data.services[0]);
+        }
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 8px;">
+            👁️ ${pEntry ? pEntry.label : targetServices.map(s => s.name).join(" & ")}
+          </h3>
+          <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 16px;">
+            Esta página contiene <strong>${targetServices.length} efecto(s)</strong>. Edita fotos, encuadres, textos y tarifas:
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 18px;">
+            ${targetServices.map((s, idx) => {
+              const { posX, posY } = this.parsePosition(s.imagePosition || "center center");
+              return `
+                <div style="background: var(--admin-surface-card); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--admin-border); padding-bottom: 8px;">
+                    <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--admin-primary); letter-spacing: 0.08em;">
+                      Efecto 0${idx + 1}: ${s.name}
+                    </span>
+                    <span style="font-size: 11px; color: var(--admin-text-muted);">${s.groupTitle || s.categoryId}</span>
+                  </div>
+
+                  <input type="hidden" id="admin_srv_id_${idx}" value="${s.id}">
+
+                  <!-- Foto y Sliders X/Y del Efecto -->
+                  <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px; background: var(--admin-surface-input); padding: 12px; border-radius: 8px; border: 1px solid var(--admin-border);">
+                    <div style="width: 90px; height: 90px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
+                      <img id="admin_img_preview_srv_${idx}" src="${s.image || 'assets/img/page_img_1.jpeg'}" style="width:100%; height:100%; object-fit:cover; object-position: ${posX}% ${posY}%;" alt="${s.name}">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                      <label class="admin-btn admin-btn-secondary" style="align-self: flex-start; cursor: pointer; padding: 4px 10px; font-size: 11px;">
+                        🔄 Cambiar Foto del Efecto
+                        <input type="file" accept="image/*" style="display: none;" onchange="window.adminApp.handleAdminLbPhotoUpload('srv_${idx}', event)">
+                      </label>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                          <span style="font-size: 10px; color: var(--admin-text-muted);">Horizontal (X): <b id="admin_val_x_srv_${idx}">${posX}%</b></span>
+                          <input type="range" id="admin_slider_x_srv_${idx}" min="0" max="100" value="${posX}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('srv_${idx}')">
+                        </div>
+                        <div>
+                          <span style="font-size: 10px; color: var(--admin-text-muted);">Vertical (Y): <b id="admin_val_y_srv_${idx}">${posY}%</b></span>
+                          <input type="range" id="admin_slider_y_srv_${idx}" min="0" max="100" value="${posY}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('srv_${idx}')">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Textos y Tarifas -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Nombre del Efecto</label>
+                      <input type="text" id="admin_srv_name_${idx}" class="admin-form-input" value="${s.name}">
+                    </div>
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Subtítulo (ej: 01 · Resultado sutil)</label>
+                      <input type="text" id="admin_srv_sub_${idx}" class="admin-form-input" value="${s.subtitle || ''}">
+                    </div>
+                  </div>
+
+                  <div class="admin-form-group" style="margin-bottom: 10px;">
+                    <label class="admin-form-label" style="font-size: 10px;">Descripción del Efecto</label>
+                    <textarea id="admin_srv_desc_${idx}" class="admin-form-textarea" rows="2">${s.desc || ''}</textarea>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Precio (COP)</label>
+                      <input type="number" id="admin_srv_price_${idx}" class="admin-form-input" value="${s.price || ''}" placeholder="Opcional" style="color: var(--admin-primary); font-weight: 700;">
+                    </div>
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Duración</label>
+                      <input type="text" id="admin_srv_dur_${idx}" class="admin-form-input" value="${s.duration || ''}" placeholder="ej: 3 a 5 semanas">
+                    </div>
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Retoque (COP)</label>
+                      <input type="number" id="admin_srv_ret_${idx}" class="admin-form-input" value="${s.retouch15_21 || ''}" placeholder="Opcional">
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    handleAdminLbSliderChange(key) {
+      const sX = document.getElementById(`admin_slider_x_${key}`);
+      const sY = document.getElementById(`admin_slider_y_${key}`);
+      const img = document.getElementById(`admin_img_preview_${key}`);
+      const valX = document.getElementById(`admin_val_x_${key}`);
+      const valY = document.getElementById(`admin_val_y_${key}`);
+
+      if (sX && sY && img) {
+        const x = sX.value;
+        const y = sY.value;
+        if (valX) valX.textContent = `${x}%`;
+        if (valY) valY.textContent = `${y}%`;
+        img.style.objectPosition = `${x}% ${y}%`;
+      }
+    }
+
+    handleAdminLbPhotoUpload(key, event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      this.compressImage(file, 800, 0.65, (compressedBase64) => {
+        this.adminLbBase64Uploads[key] = compressedBase64;
+        const img = document.getElementById(`admin_img_preview_${key}`);
+        if (img) img.src = compressedBase64;
+        this.showToast("✓ Foto cargada en el editor", "success");
+      });
+    }
+
+    async handleSaveAdminLbPage(e) {
+      e.preventDefault();
+      const selector = document.getElementById("adminLbPageSelector");
+      if (!selector) return;
+      const pageKey = selector.value;
+      const data = this.state.data;
+      if (!data.lookbook) data.lookbook = {};
+
+      const saveBtn = document.getElementById("btnSaveAdminLbPage");
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "⏳ Guardando en Firestore...";
+      }
+
+      try {
+        // 1. PORTADA
+        if (pageKey === "p1_cover") {
+          const cTitle = document.getElementById("admin_lb_coverTitle");
+          const cSub = document.getElementById("admin_lb_coverSubtitle");
+          const cYear = document.getElementById("admin_lb_coverYear");
+          const sX = document.getElementById("admin_slider_x_cover");
+          const sY = document.getElementById("admin_slider_y_cover");
+
+          if (cTitle) data.lookbook.coverTitle = cTitle.value.trim();
+          if (cSub) data.lookbook.coverSubtitle = cSub.value.trim();
+          if (cYear) data.lookbook.coverYear = cYear.value.trim();
+          if (this.adminLbBase64Uploads["cover"]) data.hero.image = this.adminLbBase64Uploads["cover"];
+          if (sX && sY) data.hero.imagePosition = `${sX.value}% ${sY.value}%`;
+        }
+        // 2. BIENVENIDA
+        else if (pageKey === "p2_welcome") {
+          const kicker = document.getElementById("admin_lb_welcomeKicker");
+          const title = document.getElementById("admin_lb_welcomeTitle");
+          const lead = document.getElementById("admin_lb_welcomeLead");
+          const text = document.getElementById("admin_lb_welcomeText");
+
+          if (kicker) data.lookbook.welcomeKicker = kicker.value.trim();
+          if (title) data.lookbook.welcomeTitle = title.value.trim();
+          if (lead) {
+            data.lookbook.welcomeLead = lead.value.trim();
+            if (data.studio) data.studio.welcomeLead = lead.value.trim();
+          }
+          if (text) {
+            data.lookbook.welcomeText = text.value.trim();
+            if (data.studio) data.studio.welcomeText = text.value.trim();
+          }
+        }
+        // 3. STUDIO EXPERIENCE
+        else if (pageKey === "p3_studio") {
+          const sTitle = document.getElementById("admin_lb_studioTitle");
+          const sQuote = document.getElementById("admin_lb_studioQuote");
+          const sDesc = document.getElementById("admin_lb_studioDesc");
+
+          if (sTitle) data.lookbook.studioTitle = sTitle.value.trim();
+          if (sQuote) {
+            data.lookbook.studioQuote = sQuote.value.trim();
+            if (data.studio) data.studio.slogan = sQuote.value.trim();
+          }
+          if (sDesc) data.lookbook.studioDesc = sDesc.value.trim();
+        }
+        // 4. DIVIDERS
+        else if (pageKey.includes("divider")) {
+          const dTitle = document.getElementById("admin_lb_dividerTitle");
+          const dQuote = document.getElementById("admin_lb_dividerQuote");
+
+          if (pageKey.includes("lifting")) {
+            if (dTitle) data.lookbook.liftingDividerTitle = dTitle.value.trim();
+            if (dQuote) data.lookbook.liftingDividerQuote = dQuote.value.trim();
+          } else if (pageKey.includes("ext")) {
+            if (dTitle) data.lookbook.extensionsDividerTitle = dTitle.value.trim();
+            if (dQuote) data.lookbook.extensionsDividerQuote = dQuote.value.trim();
+          } else if (pageKey.includes("cejas")) {
+            if (dTitle) data.lookbook.cejasDividerTitle = dTitle.value.trim();
+            if (dQuote) data.lookbook.cejasDividerQuote = dQuote.value.trim();
+          } else if (pageKey.includes("lips")) {
+            if (dTitle) data.lookbook.hydralipsDividerTitle = dTitle.value.trim();
+            if (dQuote) data.lookbook.hydralipsDividerQuote = dQuote.value.trim();
+          }
+        }
+        // 5. GALERÍA RESULTADOS LIFTING
+        else if (pageKey === "p6_lifting_evidence") {
+          const liftingService = data.services.find(s => s.id === "lifting-coreano");
+          if (liftingService) {
+            if (!Array.isArray(liftingService.gallery)) liftingService.gallery = [];
+            [0, 1, 2].forEach(idx => {
+              if (!liftingService.gallery[idx]) {
+                liftingService.gallery[idx] = { id: `lift-res-${idx+1}`, src: `assets/img/lifting_${idx+1}.jpeg` };
+              }
+              const g = liftingService.gallery[idx];
+              const titleInput = document.getElementById(`admin_lift_g_title_${idx}`);
+              const subInput = document.getElementById(`admin_lift_g_sub_${idx}`);
+              const sX = document.getElementById(`admin_slider_x_lift_g_${idx}`);
+              const sY = document.getElementById(`admin_slider_y_lift_g_${idx}`);
+
+              if (titleInput) g.title = titleInput.value.trim();
+              if (subInput) g.subtitle = subInput.value.trim();
+              if (sX && sY) g.position = `${sX.value}% ${sY.value}%`;
+              if (this.adminLbBase64Uploads[`lift_g_${idx}`]) {
+                g.src = this.adminLbBase64Uploads[`lift_g_${idx}`];
+              }
+            });
+          }
+        }
+        // 6. COMBOS & EXPERIENCIAS
+        else if (pageKey === "p19_combos") {
+          const cTitle = document.getElementById("admin_combo_bannerTitle");
+          const cDesc = document.getElementById("admin_combo_bannerDesc");
+          if (cTitle) {
+            if (!data.comboBanner) data.comboBanner = {};
+            data.comboBanner.title = cTitle.value.trim();
+          }
+          if (cDesc) {
+            if (!data.comboBanner) data.comboBanner = {};
+            data.comboBanner.desc = cDesc.value.trim();
+          }
+
+          const expServices = data.services.filter(s => s.categoryId === "experiencias");
+          expServices.forEach((exp, idx) => {
+            const nameInput = document.getElementById(`admin_exp_name_${idx}`);
+            const subInput = document.getElementById(`admin_exp_sub_${idx}`);
+            const descInput = document.getElementById(`admin_exp_desc_${idx}`);
+            const priceInput = document.getElementById(`admin_exp_price_${idx}`);
+            const customLabelInput = document.getElementById(`admin_exp_customLabel_${idx}`);
+
+            if (nameInput) exp.name = nameInput.value.trim();
+            if (subInput) exp.subtitle = subInput.value.trim();
+            if (descInput) exp.desc = descInput.value.trim();
+            if (priceInput) exp.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
+            if (customLabelInput) exp.customPriceLabel = customLabelInput.value.trim();
+          });
+        }
+        // 7. POLÍTICAS
+        else if (pageKey === "p14_policies") {
+          const pTitle = document.getElementById("admin_lb_polTitle");
+          const pSub = document.getElementById("admin_lb_polSub");
+          const pCond = document.getElementById("admin_lb_polConditions");
+          const pNote = document.getElementById("admin_lb_polNote");
+
+          if (!data.retouchPolicies) data.retouchPolicies = {};
+          if (pTitle) data.retouchPolicies.title = pTitle.value.trim();
+          if (pSub) data.retouchPolicies.subtitle = pSub.value.trim();
+          if (pCond) data.retouchPolicies.conditions = pCond.value.split("\n").map(c => c.trim()).filter(Boolean);
+          if (pNote) data.retouchPolicies.note = pNote.value.trim();
+        }
+        // 8. CONTRAPORTADA
+        else if (pageKey === "p20_backcover") {
+          const bTitle = document.getElementById("admin_lb_backTitle");
+          const bQuote = document.getElementById("admin_lb_backQuote");
+          const bCta = document.getElementById("admin_lb_backCta");
+
+          if (bTitle) data.lookbook.backCoverTitle = bTitle.value.trim();
+          if (bQuote) data.lookbook.backCoverQuote = bQuote.value.trim();
+          if (bCta) data.lookbook.backCoverCta = bCta.value.trim();
+        }
+        // 9. SERVICIOS (1 O MÚLTIPLES EFECTOS)
+        else {
+          let idx = 0;
+          while (document.getElementById(`admin_srv_id_${idx}`)) {
+            const sId = document.getElementById(`admin_srv_id_${idx}`).value;
+            const s = data.services.find(x => x.id === sId);
+            if (s) {
+              const nameInput = document.getElementById(`admin_srv_name_${idx}`);
+              const subInput = document.getElementById(`admin_srv_sub_${idx}`);
+              const descInput = document.getElementById(`admin_srv_desc_${idx}`);
+              const priceInput = document.getElementById(`admin_srv_price_${idx}`);
+              const durInput = document.getElementById(`admin_srv_dur_${idx}`);
+              const retInput = document.getElementById(`admin_srv_ret_${idx}`);
+              const sX = document.getElementById(`admin_slider_x_srv_${idx}`);
+              const sY = document.getElementById(`admin_slider_y_srv_${idx}`);
+
+              if (nameInput) s.name = nameInput.value.trim();
+              if (subInput) s.subtitle = subInput.value.trim();
+              if (descInput) s.desc = descInput.value.trim();
+              if (priceInput) s.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
+              if (durInput) s.duration = durInput.value.trim();
+              if (retInput) s.retouch15_21 = retInput.value.trim() === "" ? null : parseInt(retInput.value, 10);
+              if (sX && sY) s.imagePosition = `${sX.value}% ${sY.value}%`;
+              if (this.adminLbBase64Uploads[`srv_${idx}`]) {
+                s.image = this.adminLbBase64Uploads[`srv_${idx}`];
+              }
+            }
+            idx++;
+          }
+        }
+
+        await this.state.saveToCloud(this.state.data);
+        this.reloadLookbookIframe();
+        this.showToast("✓ ¡Página y todos sus elementos guardados en Firestore!", "success");
+      } catch (err) {
+        alert("Error al guardar: " + err.message);
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "💾 Guardar Cambios de Esta Página en Firestore";
+        }
+      }
+    }
+
     async handleSaveLookbookConfig(e) {
       e.preventDefault();
       this.state.data.lookbook = {
         coverTitle: document.getElementById("lbFormCoverTitle").value.trim(),
-        coverSubtitle: document.getElementById("lbFormCoverSubtitle").value.trim(),
         coverYear: document.getElementById("lbFormCoverYear").value.trim(),
-        welcomeKicker: "01 · Bienvenida",
-        welcomeTitle: "Bienvenida",
         welcomeLead: document.getElementById("lbFormWelcomeLead").value.trim(),
-        welcomeText: document.getElementById("lbFormWelcomeText").value.trim(),
-        studioTitle: "Studio Experience",
-        studioQuote: document.getElementById("lbFormBackQuote").value.trim(),
-        studioDesc: "Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.",
-        liftingDividerTitle: document.getElementById("lbFormLiftingTitle").value.trim(),
         liftingDividerQuote: document.getElementById("lbFormLiftingQuote").value.trim(),
-        extensionsDividerTitle: document.getElementById("lbFormExtTitle").value.trim(),
         extensionsDividerQuote: document.getElementById("lbFormExtQuote").value.trim(),
-        cejasDividerTitle: document.getElementById("lbFormCejasTitle").value.trim(),
         cejasDividerQuote: document.getElementById("lbFormCejasQuote").value.trim(),
-        hydralipsDividerTitle: document.getElementById("lbFormLipsTitle").value.trim(),
-        hydralipsDividerQuote: document.getElementById("lbFormLipsQuote").value.trim(),
-        backCoverTitle: document.getElementById("lbFormBackTitle").value.trim(),
-        backCoverQuote: document.getElementById("lbFormBackQuote").value.trim(),
-        backCoverCta: document.getElementById("lbFormBackCta").value.trim()
+        hydralipsDividerQuote: document.getElementById("lbFormLipsQuote").value.trim()
       };
 
       try {
         await this.state.saveToCloud(this.state.data);
         this.reloadLookbookIframe();
-        this.showToast("✓ Configuración editorial de la Revista guardada en Firestore", "success");
+        this.showToast("✓ Textos globales del lookbook guardados en Firestore", "success");
       } catch (err) {
         alert("Error al guardar: " + err.message);
       }

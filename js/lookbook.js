@@ -622,12 +622,13 @@ class LookbookManager {
   }
 
   // ================= OPEN / CLOSE PAGE EDITOR =================
+  // ================= OPEN / CLOSE PAGE EDITOR =================
   openPageEditor(pageKey) {
     const modal = document.getElementById("lookbookPageModal");
     if (!modal) return;
 
     this.activeEditPageKey = pageKey;
-    this.currentBase64Upload = null;
+    this.currentBase64Uploads = {};
 
     const data = this.state.data;
     const lb = data.lookbook || {};
@@ -646,10 +647,12 @@ class LookbookManager {
     let targetPhoto = null;
     let targetPos = "50% 50%";
     let fieldsHtml = "";
+    photoSection.style.display = "none";
 
     // 1. PORTADA
     if (pageKey === "p1_cover") {
-      titleEl.textContent = "Editar Portada Principal";
+      titleEl.textContent = "Editar Portada Principal (Pág. 01)";
+      photoSection.style.display = "block";
       targetPhoto = (data.hero && data.hero.image) ? data.hero.image : "assets/img/page_img_1.jpeg";
       targetPos = (data.hero && data.hero.imagePosition) ? data.hero.imagePosition : "center 20%";
 
@@ -663,8 +666,7 @@ class LookbookManager {
     }
     // 2. BIENVENIDA
     else if (pageKey === "p2_welcome") {
-      titleEl.textContent = "Editar Bienvenida";
-      photoSection.style.display = "none";
+      titleEl.textContent = "Editar Bienvenida Editorial (Pág. 02)";
       fieldsHtml = `
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Kicker / Subtítulo Superior</label><input type="text" id="editWelcomeKicker" value="${lb.welcomeKicker || '01 · Bienvenida'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Título Principal</label><input type="text" id="editWelcomeTitle" value="${lb.welcomeTitle || 'Bienvenida'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;"></div>
@@ -672,17 +674,16 @@ class LookbookManager {
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Mensaje de Confianza</label><textarea id="editWelcomeText" rows="2" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-family: inherit;">${lb.welcomeText || data.studio.welcomeText || ''}</textarea></div>
       `;
     }
-    // 3. STUDIO
+    // 3. STUDIO EXPERIENCE
     else if (pageKey === "p3_studio") {
-      titleEl.textContent = "Editar Studio Experience";
-      photoSection.style.display = "none";
+      titleEl.textContent = "Editar Studio Experience (Pág. 03)";
       fieldsHtml = `
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Título</label><input type="text" id="editStudioTitle" value="${lb.studioTitle || 'Studio Experience'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;"></div>
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Frase / Slogan de Marca</label><input type="text" id="editStudioQuote" value="${lb.studioQuote || data.studio.slogan || 'Tu mirada, nuestro sello.'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;"></div>
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Descripción de la Experiencia</label><textarea id="editStudioDesc" rows="3" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-family: inherit;">${lb.studioDesc || 'Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.'}</textarea></div>
       `;
     }
-    // 4. DIVIDERS
+    // 4. DIVIDERS / SEPARADORES
     else if (pageKey.includes("divider")) {
       const isLift = pageKey.includes("lifting");
       const isExt = pageKey.includes("ext");
@@ -690,7 +691,6 @@ class LookbookManager {
       const isLips = pageKey.includes("lips");
 
       titleEl.textContent = "Editar Separador de Colección";
-      photoSection.style.display = "none";
 
       let defTitle = isLift ? lb.liftingDividerTitle || "Lifting" : (isExt ? lb.extensionsDividerTitle || "Extensiones" : (isCejas ? lb.cejasDividerTitle || "Cejas" : lb.hydralipsDividerTitle || "HydraLips"));
       let defQuote = isLift ? lb.liftingDividerQuote || "El servicio insignia" : (isExt ? lb.extensionsDividerQuote || "La mirada que siempre imaginaste." : (isCejas ? lb.cejasDividerQuote || "Un diseño pensado para tu rostro." : lb.hydralipsDividerQuote || "Tus labios en su mejor versión."));
@@ -700,44 +700,226 @@ class LookbookManager {
         <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Frase / Cita de Colección</label><input type="text" id="editDividerQuote" value="${defQuote}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
       `;
     }
-    // 5. SERVICES (SINGLE OR PAIR)
+    // 5. GALERÍA DE RESULTADOS LIFTING (3 FOTOS DE CLIENTAS)
+    else if (pageKey === "p6_lifting_evidence") {
+      titleEl.textContent = "Editar Galería de Resultados Lifting (Pág. 06)";
+      const liftingService = data.services.find(s => s.id === "lifting-coreano") || data.services[0];
+      const gallery = (liftingService && liftingService.gallery) ? liftingService.gallery : [];
+
+      fieldsHtml = `
+        <div style="font-size: 12px; color: var(--color-ink-light); margin-bottom: 8px;">
+          Edita las 3 fotografías de resultados de clientas reales que aparecen en la página 6:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          ${[0, 1, 2].map(idx => {
+            const g = gallery[idx] || { src: `assets/img/lifting_${idx+1}.jpeg`, title: `Resultado 0${idx+1}`, subtitle: "", position: "50% 30%" };
+            const { posX, posY } = this.parsePosition(g.position);
+            return `
+              <div style="background: var(--color-paper-alt); border: 1px solid var(--color-hairline); border-radius: 8px; padding: 14px;">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-primary); display: block; margin-bottom: 8px;">
+                  📸 Resultado Clienta 0${idx + 1}
+                </span>
+                <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 10px;">
+                  <div style="width: 80px; height: 80px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
+                    <img id="img_preview_lift_g_${idx}" src="${g.src}" style="width:100%; height:100%; object-fit:cover; object-position: ${posX}% ${posY}%;" alt="Clienta ${idx+1}">
+                  </div>
+                  <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                    <label class="btn btn-outline btn-sm" style="align-self: flex-start; cursor: pointer;">
+                      🔄 Cambiar Foto
+                      <input type="file" accept="image/*" style="display: none;" onchange="window.lookbookManager.handleDynamicPhotoUpload('lift_g_${idx}', event)">
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                      <div style="flex: 1;">
+                        <span style="font-size: 10px; color: var(--color-muted);">X: <b id="val_x_lift_g_${idx}">${posX}%</b></span>
+                        <input type="range" id="slider_x_lift_g_${idx}" min="0" max="100" value="${posX}" style="width: 100%; accent-color: var(--color-primary);" oninput="window.lookbookManager.handleDynamicSliderChange('lift_g_${idx}')">
+                      </div>
+                      <div style="flex: 1;">
+                        <span style="font-size: 10px; color: var(--color-muted);">Y: <b id="val_y_lift_g_${idx}">${posY}%</b></span>
+                        <input type="range" id="slider_y_lift_g_${idx}" min="0" max="100" value="${posY}" style="width: 100%; accent-color: var(--color-primary);" oninput="window.lookbookManager.handleDynamicSliderChange('lift_g_${idx}')">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Título</label><input type="text" id="input_title_lift_g_${idx}" value="${g.title || `Resultado 0${idx+1}`}" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline);"></div>
+                  <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Subtítulo / Efecto</label><input type="text" id="input_sub_lift_g_${idx}" value="${g.subtitle || ''}" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline);"></div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+    // 6. EXPERIENCIAS & COMBOS (PÁGINA 19/20)
+    else if (pageKey === "p19_combos") {
+      titleEl.textContent = "Editar Experiencias & Combos";
+      const comboBanner = data.comboBanner || {};
+      const expServices = data.services.filter(s => s.categoryId === "experiencias");
+
+      fieldsHtml = `
+        <div style="background: var(--color-paper-alt); border: 1px solid var(--color-hairline); border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-primary); display: block; margin-bottom: 8px;">⭐ Encabezado del Banner</span>
+          <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Título Principal</label><input type="text" id="editComboTitle" value="${comboBanner.title || 'Experiencias & Rituales'}" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--color-hairline); font-weight:600;"></div>
+          <div style="margin-top: 8px;"><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Descripción General</label><textarea id="editComboDesc" rows="2" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid var(--color-hairline);">${comboBanner.desc || ''}</textarea></div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 700; color: var(--color-primary); text-transform: uppercase; margin-bottom: 6px;">✨ Efectos / Combos Incluidos:</div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          ${expServices.map((exp, idx) => `
+            <div style="background: var(--color-paper-light); border: 1px solid var(--color-hairline); border-radius: 8px; padding: 12px;">
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-ink); display: block; margin-bottom: 6px;">Combo 0${idx + 1}: ${exp.name}</span>
+              <input type="hidden" id="exp_id_${idx}" value="${exp.id}">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;">
+                <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Nombre</label><input type="text" id="exp_name_${idx}" value="${exp.name}" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline); font-weight:600;"></div>
+                <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Subtítulo / Beneficio</label><input type="text" id="exp_sub_${idx}" value="${exp.subtitle || ''}" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline);"></div>
+              </div>
+              <div style="margin-bottom: 6px;"><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Descripción</label><textarea id="exp_desc_${idx}" rows="2" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline);">${exp.desc || ''}</textarea></div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Precio Fijo (COP)</label><input type="number" id="exp_price_${idx}" value="${exp.price || ''}" placeholder="Opcional" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline); font-weight:700; color:var(--color-primary);"></div>
+                <div><label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Tarifa / Texto de Precio</label><input type="text" id="exp_customLabel_${idx}" value="${exp.customPriceLabel || ''}" placeholder="Ej: Según pestañas elegidas" style="width:100%; padding:6px 8px; border-radius:4px; border:1px solid var(--color-hairline);"></div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+    // 7. POLÍTICAS DE RETOQUE
+    else if (pageKey === "p14_policies") {
+      titleEl.textContent = "Editar Políticas de Retoque";
+      const pol = data.retouchPolicies || {};
+      const condStr = Array.isArray(pol.conditions) ? pol.conditions.join("\n") : "";
+
+      fieldsHtml = `
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Título de la Sección</label><input type="text" id="editPolTitle" value="${pol.title || 'Políticas de retoque'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;"></div>
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Subtítulo / Introducción</label><textarea id="editPolSub" rows="2" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">${pol.subtitle || ''}</textarea></div>
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Condiciones para Retoque (Una por línea)</label><textarea id="editPolConditions" rows="4" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-family: inherit;">${condStr}</textarea></div>
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Nota Aclaratoria</label><input type="text" id="editPolNote" value="${pol.note || ''}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
+      `;
+    }
+    // 8. CONTRAPORTADA & CONTACTO
+    else if (pageKey === "p20_backcover") {
+      titleEl.textContent = "Editar Contraportada & Contacto";
+      fieldsHtml = `
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Título de Marca</label><input type="text" id="editBackTitle" value="${lb.backCoverTitle || data.studio.name || 'Danna Mesa Studio'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;"></div>
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Frase / Cita de Cierre</label><input type="text" id="editBackQuote" value="${lb.backCoverQuote || data.studio.slogan || 'Tu mirada, nuestro sello.'}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
+        <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Mensaje Final / Llamado a la Acción</label><textarea id="editBackCta" rows="2" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">${lb.backCoverCta || 'Una experiencia creada para resaltar tu esencia natural.'}</textarea></div>
+      `;
+    }
+    // 9. PÁGINAS DE SERVICIOS (1 O 2 EFECTOS CON FOTOS, ENCUADRES, TEXTOS Y PRECIOS COMPLETOS)
     else {
-      // Find service
+      // Buscar servicios asociados a esta página
+      let targetServices = [];
       const pEntry = this.pagesDirectory.find(p => p.key === pageKey);
-      let sId = pEntry ? (pEntry.serviceId || pEntry.s1) : null;
-      if (!sId && pageKey.startsWith("p_ext_")) {
+
+      if (pEntry && pEntry.s1 && pEntry.s2) {
+        const s1 = data.services.find(x => x.id === pEntry.s1);
+        const s2 = data.services.find(x => x.id === pEntry.s2);
+        if (s1) targetServices.push(s1);
+        if (s2) targetServices.push(s2);
+      } else if (pEntry && pEntry.serviceId) {
+        const s = data.services.find(x => x.id === pEntry.serviceId);
+        if (s) targetServices.push(s);
+      } else if (pageKey.startsWith("p_ext_")) {
         const parts = pageKey.replace("p_ext_", "").split("_");
-        sId = parts[0];
-      }
-      if (!sId && pageKey.startsWith("p_cejas_")) {
+        parts.forEach(id => {
+          const s = data.services.find(x => x.id === id);
+          if (s && !targetServices.some(t => t.id === s.id)) targetServices.push(s);
+        });
+      } else if (pageKey.startsWith("p_cejas_")) {
         const parts = pageKey.replace("p_cejas_", "").split("_");
-        sId = parts[0];
+        parts.forEach(id => {
+          const s = data.services.find(x => x.id === id);
+          if (s && !targetServices.some(t => t.id === s.id)) targetServices.push(s);
+        });
       }
 
-      const s = data.services.find(x => x.id === sId) || data.services[0];
-      if (s) {
-        titleEl.textContent = `Editar Página: ${s.name}`;
-        targetPhoto = s.image || "assets/img/page_img_1.jpeg";
-        targetPos = s.imagePosition || "50% 50%";
-
-        fieldsHtml = `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Nombre del Efecto / Servicio</label><input type="text" id="editSrvName" value="${s.name}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;"></div>
-            <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Subtítulo</label><input type="text" id="editSrvSubtitle" value="${s.subtitle || ''}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
-          </div>
-          <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Descripción</label><textarea id="editSrvDesc" rows="2" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-family: inherit;">${s.desc || ''}</textarea></div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-            <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Precio (COP)</label><input type="number" id="editSrvPrice" value="${s.price || 0}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 700; color: var(--color-primary);"></div>
-            <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Duración</label><input type="text" id="editSrvDuration" value="${s.duration || ''}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
-            <div><label style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Retoque (COP)</label><input type="number" id="editSrvRetouch" value="${s.retouch15_21 || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);"></div>
-          </div>
-        `;
+      if (targetServices.length === 0) {
+        targetServices.push(data.services[0]);
       }
+
+      titleEl.textContent = `Editar Página: ${targetServices.map(s => s.name).join(" & ")}`;
+
+      fieldsHtml = `
+        <div style="font-size: 12px; color: var(--color-ink-light); margin-bottom: 8px;">
+          Esta página contiene <strong>${targetServices.length} efecto(s)</strong>. Puedes editar la foto, encuadre X/Y, textos y tarifas de cada uno:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+          ${targetServices.map((s, idx) => {
+            const { posX, posY } = this.parsePosition(s.imagePosition || "center center");
+            return `
+              <div style="background: var(--color-paper-alt); border: 1px solid var(--color-hairline); border-radius: 10px; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--color-hairline); padding-bottom: 8px;">
+                  <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--color-primary); letter-spacing: 0.1em;">
+                    👁️ Efecto 0${idx + 1}: ${s.name}
+                  </span>
+                  <span style="font-size: 11px; color: var(--color-muted);">${s.groupTitle || s.categoryId}</span>
+                </div>
+
+                <input type="hidden" id="multi_srv_id_${idx}" value="${s.id}">
+
+                <!-- Foto y Sliders X/Y del Efecto -->
+                <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px; background: var(--color-paper-light); padding: 12px; border-radius: 8px;">
+                  <div style="width: 90px; height: 90px; border-radius: 6px; overflow: hidden; background: #000; flex-shrink: 0;">
+                    <img id="img_preview_srv_${idx}" src="${s.image || 'assets/img/page_img_1.jpeg'}" style="width:100%; height:100%; object-fit:cover; object-position: ${posX}% ${posY}%;" alt="${s.name}">
+                  </div>
+                  <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                    <label class="btn btn-outline btn-sm" style="align-self: flex-start; cursor: pointer;">
+                      🔄 Cambiar Foto del Efecto
+                      <input type="file" accept="image/*" style="display: none;" onchange="window.lookbookManager.handleDynamicPhotoUpload('srv_${idx}', event)">
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                      <div style="flex: 1;">
+                        <span style="font-size: 10px; color: var(--color-muted);">Horizontal (X): <b id="val_x_srv_${idx}">${posX}%</b></span>
+                        <input type="range" id="slider_x_srv_${idx}" min="0" max="100" value="${posX}" style="width: 100%; accent-color: var(--color-primary);" oninput="window.lookbookManager.handleDynamicSliderChange('srv_${idx}')">
+                      </div>
+                      <div style="flex: 1;">
+                        <span style="font-size: 10px; color: var(--color-muted);">Vertical (Y): <b id="val_y_srv_${idx}">${posY}%</b></span>
+                        <input type="range" id="slider_y_srv_${idx}" min="0" max="100" value="${posY}" style="width: 100%; accent-color: var(--color-primary);" oninput="window.lookbookManager.handleDynamicSliderChange('srv_${idx}')">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Textos y Tarifas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  <div>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Nombre del Efecto</label>
+                    <input type="text" id="multi_srv_name_${idx}" value="${s.name}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 600;">
+                  </div>
+                  <div>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Subtítulo (ej: 01 · Resultado sutil)</label>
+                    <input type="text" id="multi_srv_sub_${idx}" value="${s.subtitle || ''}" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                  <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Descripción del Efecto</label>
+                  <textarea id="multi_srv_desc_${idx}" rows="2" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-family: inherit;">${s.desc || ''}</textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                  <div>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Precio (COP)</label>
+                    <input type="number" id="multi_srv_price_${idx}" value="${s.price || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 700; color: var(--color-primary);">
+                  </div>
+                  <div>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Duración</label>
+                    <input type="text" id="multi_srv_dur_${idx}" value="${s.duration || ''}" placeholder="ej: 3 a 5 semanas" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">
+                  </div>
+                  <div>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Retoque (COP)</label>
+                    <input type="number" id="multi_srv_ret_${idx}" value="${s.retouch15_21 || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
     }
 
-    // Set Photo & Sliders
-    if (targetPhoto) {
-      photoSection.style.display = "block";
+    // Set Photo & Sliders si aplica foto general
+    if (targetPhoto && photoSection.style.display !== "none") {
       previewImg.src = targetPhoto;
       const { posX, posY } = this.parsePosition(targetPos);
       sliderX.value = posX;
@@ -748,10 +930,37 @@ class LookbookManager {
     }
 
     dynamicFields.innerHTML = fieldsHtml;
-    this.initAdminControls();
     modal.style.display = "flex";
     modal.classList.add("active");
     modal.classList.add("open");
+  }
+
+  handleDynamicSliderChange(key) {
+    const sX = document.getElementById(`slider_x_${key}`);
+    const sY = document.getElementById(`slider_y_${key}`);
+    const img = document.getElementById(`img_preview_${key}`);
+    const valX = document.getElementById(`val_x_${key}`);
+    const valY = document.getElementById(`val_y_${key}`);
+
+    if (sX && sY && img) {
+      const x = sX.value;
+      const y = sY.value;
+      if (valX) valX.textContent = `${x}%`;
+      if (valY) valY.textContent = `${y}%`;
+      img.style.objectPosition = `${x}% ${y}%`;
+    }
+  }
+
+  handleDynamicPhotoUpload(key, event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.compressImage(file, 800, 0.65, (compressedBase64) => {
+      this.currentBase64Uploads[key] = compressedBase64;
+      const img = document.getElementById(`img_preview_${key}`);
+      if (img) img.src = compressedBase64;
+      if (window.catalogApp) window.catalogApp.showToast("✓ Foto cargada y optimizada");
+    });
   }
 
   closePageEditor() {
@@ -763,6 +972,7 @@ class LookbookManager {
     }
     this.activeEditPageKey = null;
     this.currentBase64Upload = null;
+    this.currentBase64Uploads = {};
   }
 
   async handleSavePage(e) {
@@ -772,115 +982,197 @@ class LookbookManager {
     const data = this.state.data;
     if (!data.lookbook) data.lookbook = {};
 
-    const sliderX = document.getElementById("lbPageSliderX");
-    const sliderY = document.getElementById("lbPageSliderY");
-    const newPos = (sliderX && sliderY) ? `${sliderX.value}% ${sliderY.value}%` : null;
-
-    // 1. PORTADA
-    if (pageKey === "p1_cover") {
-      const cTitle = document.getElementById("editCoverTitle");
-      const cSub = document.getElementById("editCoverSubtitle");
-      const cYear = document.getElementById("editCoverYear");
-
-      if (cTitle) data.lookbook.coverTitle = cTitle.value.trim();
-      if (cSub) data.lookbook.coverSubtitle = cSub.value.trim();
-      if (cYear) data.lookbook.coverYear = cYear.value.trim();
-      if (this.currentBase64Upload) data.hero.image = this.currentBase64Upload;
-      if (newPos) data.hero.imagePosition = newPos;
-    }
-    // 2. BIENVENIDA
-    else if (pageKey === "p2_welcome") {
-      const kicker = document.getElementById("editWelcomeKicker");
-      const title = document.getElementById("editWelcomeTitle");
-      const lead = document.getElementById("editWelcomeLead");
-      const text = document.getElementById("editWelcomeText");
-
-      if (kicker) data.lookbook.welcomeKicker = kicker.value.trim();
-      if (title) data.lookbook.welcomeTitle = title.value.trim();
-      if (lead) {
-        data.lookbook.welcomeLead = lead.value.trim();
-        data.studio.welcomeLead = lead.value.trim();
-      }
-      if (text) {
-        data.lookbook.welcomeText = text.value.trim();
-        data.studio.welcomeText = text.value.trim();
-      }
-    }
-    // 3. STUDIO
-    else if (pageKey === "p3_studio") {
-      const sTitle = document.getElementById("editStudioTitle");
-      const sQuote = document.getElementById("editStudioQuote");
-      const sDesc = document.getElementById("editStudioDesc");
-
-      if (sTitle) data.lookbook.studioTitle = sTitle.value.trim();
-      if (sQuote) {
-        data.lookbook.studioQuote = sQuote.value.trim();
-        data.studio.slogan = sQuote.value.trim();
-      }
-      if (sDesc) data.lookbook.studioDesc = sDesc.value.trim();
-    }
-    // 4. DIVIDERS
-    else if (pageKey.includes("divider")) {
-      const dTitle = document.getElementById("editDividerTitle");
-      const dQuote = document.getElementById("editDividerQuote");
-
-      if (pageKey.includes("lifting")) {
-        if (dTitle) data.lookbook.liftingDividerTitle = dTitle.value.trim();
-        if (dQuote) data.lookbook.liftingDividerQuote = dQuote.value.trim();
-      } else if (pageKey.includes("ext")) {
-        if (dTitle) data.lookbook.extensionsDividerTitle = dTitle.value.trim();
-        if (dQuote) data.lookbook.extensionsDividerQuote = dQuote.value.trim();
-      } else if (pageKey.includes("cejas")) {
-        if (dTitle) data.lookbook.cejasDividerTitle = dTitle.value.trim();
-        if (dQuote) data.lookbook.cejasDividerQuote = dQuote.value.trim();
-      } else if (pageKey.includes("lips")) {
-        if (dTitle) data.lookbook.hydralipsDividerTitle = dTitle.value.trim();
-        if (dQuote) data.lookbook.hydralipsDividerQuote = dQuote.value.trim();
-      }
-    }
-    // 5. SERVICES
-    else {
-      const pEntry = this.pagesDirectory.find(p => p.key === pageKey);
-      let sId = pEntry ? (pEntry.serviceId || pEntry.s1) : null;
-      if (!sId && pageKey.startsWith("p_ext_")) {
-        const parts = pageKey.replace("p_ext_", "").split("_");
-        sId = parts[0];
-      }
-      if (!sId && pageKey.startsWith("p_cejas_")) {
-        const parts = pageKey.replace("p_cejas_", "").split("_");
-        sId = parts[0];
-      }
-
-      const s = data.services.find(x => x.id === sId);
-      if (s) {
-        const name = document.getElementById("editSrvName");
-        const sub = document.getElementById("editSrvSubtitle");
-        const desc = document.getElementById("editSrvDesc");
-        const price = document.getElementById("editSrvPrice");
-        const dur = document.getElementById("editSrvDuration");
-        const ret = document.getElementById("editSrvRetouch");
-
-        if (name) s.name = name.value.trim();
-        if (sub) s.subtitle = sub.value.trim();
-        if (desc) s.desc = desc.value.trim();
-        if (price) s.price = parseInt(price.value, 10) || 0;
-        if (dur) s.duration = dur.value.trim();
-        if (ret) s.retouch15_21 = ret.value.trim() ? parseInt(ret.value, 10) : null;
-        if (this.currentBase64Upload) s.image = this.currentBase64Upload;
-        if (newPos) s.imagePosition = newPos;
-      }
+    const saveBtn = document.getElementById("saveLbPageModalBtn");
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "⏳ Guardando en la nube...";
     }
 
     try {
+      // 1. PORTADA
+      if (pageKey === "p1_cover") {
+        const cTitle = document.getElementById("editCoverTitle");
+        const cSub = document.getElementById("editCoverSubtitle");
+        const cYear = document.getElementById("editCoverYear");
+        const sliderX = document.getElementById("lbPageSliderX");
+        const sliderY = document.getElementById("lbPageSliderY");
+
+        if (cTitle) data.lookbook.coverTitle = cTitle.value.trim();
+        if (cSub) data.lookbook.coverSubtitle = cSub.value.trim();
+        if (cYear) data.lookbook.coverYear = cYear.value.trim();
+        if (this.currentBase64Upload) data.hero.image = this.currentBase64Upload;
+        if (sliderX && sliderY) data.hero.imagePosition = `${sliderX.value}% ${sliderY.value}%`;
+      }
+      // 2. BIENVENIDA
+      else if (pageKey === "p2_welcome") {
+        const kicker = document.getElementById("editWelcomeKicker");
+        const title = document.getElementById("editWelcomeTitle");
+        const lead = document.getElementById("editWelcomeLead");
+        const text = document.getElementById("editWelcomeText");
+
+        if (kicker) data.lookbook.welcomeKicker = kicker.value.trim();
+        if (title) data.lookbook.welcomeTitle = title.value.trim();
+        if (lead) {
+          data.lookbook.welcomeLead = lead.value.trim();
+          if (data.studio) data.studio.welcomeLead = lead.value.trim();
+        }
+        if (text) {
+          data.lookbook.welcomeText = text.value.trim();
+          if (data.studio) data.studio.welcomeText = text.value.trim();
+        }
+      }
+      // 3. STUDIO EXPERIENCE
+      else if (pageKey === "p3_studio") {
+        const sTitle = document.getElementById("editStudioTitle");
+        const sQuote = document.getElementById("editStudioQuote");
+        const sDesc = document.getElementById("editStudioDesc");
+
+        if (sTitle) data.lookbook.studioTitle = sTitle.value.trim();
+        if (sQuote) {
+          data.lookbook.studioQuote = sQuote.value.trim();
+          if (data.studio) data.studio.slogan = sQuote.value.trim();
+        }
+        if (sDesc) data.lookbook.studioDesc = sDesc.value.trim();
+      }
+      // 4. DIVIDERS
+      else if (pageKey.includes("divider")) {
+        const dTitle = document.getElementById("editDividerTitle");
+        const dQuote = document.getElementById("editDividerQuote");
+
+        if (pageKey.includes("lifting")) {
+          if (dTitle) data.lookbook.liftingDividerTitle = dTitle.value.trim();
+          if (dQuote) data.lookbook.liftingDividerQuote = dQuote.value.trim();
+        } else if (pageKey.includes("ext")) {
+          if (dTitle) data.lookbook.extensionsDividerTitle = dTitle.value.trim();
+          if (dQuote) data.lookbook.extensionsDividerQuote = dQuote.value.trim();
+        } else if (pageKey.includes("cejas")) {
+          if (dTitle) data.lookbook.cejasDividerTitle = dTitle.value.trim();
+          if (dQuote) data.lookbook.cejasDividerQuote = dQuote.value.trim();
+        } else if (pageKey.includes("lips")) {
+          if (dTitle) data.lookbook.hydralipsDividerTitle = dTitle.value.trim();
+          if (dQuote) data.lookbook.hydralipsDividerQuote = dQuote.value.trim();
+        }
+      }
+      // 5. GALERÍA RESULTADOS LIFTING
+      else if (pageKey === "p6_lifting_evidence") {
+        const liftingService = data.services.find(s => s.id === "lifting-coreano");
+        if (liftingService) {
+          if (!Array.isArray(liftingService.gallery)) liftingService.gallery = [];
+          [0, 1, 2].forEach(idx => {
+            if (!liftingService.gallery[idx]) {
+              liftingService.gallery[idx] = { id: `lift-res-${idx+1}`, src: `assets/img/lifting_${idx+1}.jpeg` };
+            }
+            const g = liftingService.gallery[idx];
+            const titleInput = document.getElementById(`input_title_lift_g_${idx}`);
+            const subInput = document.getElementById(`input_sub_lift_g_${idx}`);
+            const sX = document.getElementById(`slider_x_lift_g_${idx}`);
+            const sY = document.getElementById(`slider_y_lift_g_${idx}`);
+
+            if (titleInput) g.title = titleInput.value.trim();
+            if (subInput) g.subtitle = subInput.value.trim();
+            if (sX && sY) g.position = `${sX.value}% ${sY.value}%`;
+            if (this.currentBase64Uploads[`lift_g_${idx}`]) {
+              g.src = this.currentBase64Uploads[`lift_g_${idx}`];
+            }
+          });
+        }
+      }
+      // 6. COMBOS & EXPERIENCIAS
+      else if (pageKey === "p19_combos") {
+        const cTitle = document.getElementById("editComboTitle");
+        const cDesc = document.getElementById("editComboDesc");
+        if (cTitle) {
+          if (!data.comboBanner) data.comboBanner = {};
+          data.comboBanner.title = cTitle.value.trim();
+        }
+        if (cDesc) {
+          if (!data.comboBanner) data.comboBanner = {};
+          data.comboBanner.desc = cDesc.value.trim();
+        }
+
+        const expServices = data.services.filter(s => s.categoryId === "experiencias");
+        expServices.forEach((exp, idx) => {
+          const nameInput = document.getElementById(`exp_name_${idx}`);
+          const subInput = document.getElementById(`exp_sub_${idx}`);
+          const descInput = document.getElementById(`exp_desc_${idx}`);
+          const priceInput = document.getElementById(`exp_price_${idx}`);
+          const customLabelInput = document.getElementById(`exp_customLabel_${idx}`);
+
+          if (nameInput) exp.name = nameInput.value.trim();
+          if (subInput) exp.subtitle = subInput.value.trim();
+          if (descInput) exp.desc = descInput.value.trim();
+          if (priceInput) exp.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
+          if (customLabelInput) exp.customPriceLabel = customLabelInput.value.trim();
+        });
+      }
+      // 7. POLÍTICAS
+      else if (pageKey === "p14_policies") {
+        const pTitle = document.getElementById("editPolTitle");
+        const pSub = document.getElementById("editPolSub");
+        const pCond = document.getElementById("editPolConditions");
+        const pNote = document.getElementById("editPolNote");
+
+        if (!data.retouchPolicies) data.retouchPolicies = {};
+        if (pTitle) data.retouchPolicies.title = pTitle.value.trim();
+        if (pSub) data.retouchPolicies.subtitle = pSub.value.trim();
+        if (pCond) data.retouchPolicies.conditions = pCond.value.split("\n").map(c => c.trim()).filter(Boolean);
+        if (pNote) data.retouchPolicies.note = pNote.value.trim();
+      }
+      // 8. CONTRAPORTADA
+      else if (pageKey === "p20_backcover") {
+        const bTitle = document.getElementById("editBackTitle");
+        const bQuote = document.getElementById("editBackQuote");
+        const bCta = document.getElementById("editBackCta");
+
+        if (bTitle) data.lookbook.backCoverTitle = bTitle.value.trim();
+        if (bQuote) data.lookbook.backCoverQuote = bQuote.value.trim();
+        if (bCta) data.lookbook.backCoverCta = bCta.value.trim();
+      }
+      // 9. SERVICIOS (1 O MÚLTIPLES EFECTOS)
+      else {
+        let idx = 0;
+        while (document.getElementById(`multi_srv_id_${idx}`)) {
+          const sId = document.getElementById(`multi_srv_id_${idx}`).value;
+          const s = data.services.find(x => x.id === sId);
+          if (s) {
+            const nameInput = document.getElementById(`multi_srv_name_${idx}`);
+            const subInput = document.getElementById(`multi_srv_sub_${idx}`);
+            const descInput = document.getElementById(`multi_srv_desc_${idx}`);
+            const priceInput = document.getElementById(`multi_srv_price_${idx}`);
+            const durInput = document.getElementById(`multi_srv_dur_${idx}`);
+            const retInput = document.getElementById(`multi_srv_ret_${idx}`);
+            const sX = document.getElementById(`slider_x_srv_${idx}`);
+            const sY = document.getElementById(`slider_y_srv_${idx}`);
+
+            if (nameInput) s.name = nameInput.value.trim();
+            if (subInput) s.subtitle = subInput.value.trim();
+            if (descInput) s.desc = descInput.value.trim();
+            if (priceInput) s.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
+            if (durInput) s.duration = durInput.value.trim();
+            if (retInput) s.retouch15_21 = retInput.value.trim() === "" ? null : parseInt(retInput.value, 10);
+            if (sX && sY) s.imagePosition = `${sX.value}% ${sY.value}%`;
+            if (this.currentBase64Uploads[`srv_${idx}`]) {
+              s.image = this.currentBase64Uploads[`srv_${idx}`];
+            }
+          }
+          idx++;
+        }
+      }
+
       await this.state.saveToCloud(this.state.data);
       this.closePageEditor();
       this.render();
-      if (window.catalogApp) window.catalogApp.showToast("✓ ¡Página guardada con éxito!");
+      if (window.catalogApp) window.catalogApp.showToast("✓ ¡Página y todos sus efectos guardados exitosamente!");
     } catch (err) {
       this.closePageEditor();
       this.render();
       if (window.catalogApp) window.catalogApp.showToast("✓ Cambios aplicados localmente");
-      alert(err.message);
+      console.warn("Save page notice:", err);
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "💾 Guardar Cambios en Firestore";
+      }
     }
   }
 
