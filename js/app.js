@@ -459,12 +459,13 @@ class CatalogApp {
       // Desglose de retoques si aplica
       let retouchHtml = "";
       if (service.retouchAvailable) {
+        const ret15 = service.retouch15_17 || service.retouch15_21;
+        const ret18 = service.retouch18_21;
         retouchHtml = `
           <div class="retouch-box">
             <div class="retouch-title">✨ Tarifas de Retoque</div>
-            ${service.retouch15_21 ? `<div class="retouch-row"><span>Retoque (15 a 21 días)</span><b>${this.state.formatMoney(service.retouch15_21)}</b></div>` : ''}
-            ${service.retouch15_17 ? `<div class="retouch-row"><span>Retoque (15 a 17 días)</span><b>${this.state.formatMoney(service.retouch15_17)}</b></div>` : ''}
-            ${service.retouch18_21 ? `<div class="retouch-row"><span>Retoque (18 a 21 días)</span><b>${this.state.formatMoney(service.retouch18_21)}</b></div>` : ''}
+            ${ret15 ? `<div class="retouch-row"><span>Retoque (15 a 17 días)</span><b>${this.state.formatMoney(ret15)}</b></div>` : ''}
+            ${ret18 ? `<div class="retouch-row"><span>Retoque (18 a 21 días)</span><b>${this.state.formatMoney(ret18)}</b></div>` : ''}
           </div>
         `;
       }

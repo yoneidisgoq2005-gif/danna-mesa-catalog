@@ -372,7 +372,8 @@ class LookbookManager {
                   <div class="desc">${s1.desc}</div>
                   <div class="lb-spec-row"><span class="l">Duración</span><span class="v">${s1.duration || '3-5 semanas'}</span></div>
                   <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(s1.price)}</span></div>
-                  ${s1.retouch15_21 ? `<div class="lb-spec-row"><span class="l">Retoque (15-21d)</span><span class="v">${this.state.formatMoney(s1.retouch15_21)}</span></div>` : ''}
+                  ${(s1.retouch15_17 || s1.retouch15_21) ? `<div class="lb-spec-row"><span class="l">Retoque (15-17d)</span><span class="v">${this.state.formatMoney(s1.retouch15_17 || s1.retouch15_21)}</span></div>` : ''}
+                  ${s1.retouch18_21 ? `<div class="lb-spec-row"><span class="l">Retoque (18-21d)</span><span class="v">${this.state.formatMoney(s1.retouch18_21)}</span></div>` : ''}
                 </div>
               </div>
             </div>
@@ -596,7 +597,8 @@ class LookbookManager {
               <div class="desc">${s1.desc || ''}</div>
               <div class="lb-spec-row"><span class="l">Duración</span><span class="v">${s1.duration || '3-5 semanas'}</span></div>
               <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(s1.price)}</span></div>
-              ${s1.retouch15_21 ? `<div class="lb-spec-row"><span class="l">Retoque (15-21d)</span><span class="v">${this.state.formatMoney(s1.retouch15_21)}</span></div>` : ''}
+              ${(s1.retouch15_17 || s1.retouch15_21) ? `<div class="lb-spec-row"><span class="l">Retoque (15-17d)</span><span class="v">${this.state.formatMoney(s1.retouch15_17 || s1.retouch15_21)}</span></div>` : ''}
+              ${s1.retouch18_21 ? `<div class="lb-spec-row"><span class="l">Retoque (18-21d)</span><span class="v">${this.state.formatMoney(s1.retouch18_21)}</span></div>` : ''}
             </div>
           </div>
 
@@ -611,7 +613,8 @@ class LookbookManager {
                 <div class="desc">${s2.desc || ''}</div>
                 <div class="lb-spec-row"><span class="l">Duración</span><span class="v">${s2.duration || '3-5 semanas'}</span></div>
                 <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(s2.price)}</span></div>
-                ${s2.retouch15_21 ? `<div class="lb-spec-row"><span class="l">Retoque (15-21d)</span><span class="v">${this.state.formatMoney(s2.retouch15_21)}</span></div>` : ''}
+                ${(s2.retouch15_17 || s2.retouch15_21) ? `<div class="lb-spec-row"><span class="l">Retoque (15-17d)</span><span class="v">${this.state.formatMoney(s2.retouch15_17 || s2.retouch15_21)}</span></div>` : ''}
+                ${s2.retouch18_21 ? `<div class="lb-spec-row"><span class="l">Retoque (18-21d)</span><span class="v">${this.state.formatMoney(s2.retouch18_21)}</span></div>` : ''}
               </div>
             </div>
           ` : ''}
@@ -897,18 +900,22 @@ class LookbookManager {
                   <textarea id="multi_srv_desc_${idx}" rows="2" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-family: inherit;">${s.desc || ''}</textarea>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
                   <div>
                     <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Precio (COP)</label>
-                    <input type="number" id="multi_srv_price_${idx}" value="${s.price || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 700; color: var(--color-primary);">
+                    <input type="number" id="multi_srv_price_${idx}" value="${s.price || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--color-hairline); font-weight: 700; color: var(--color-primary);">
                   </div>
                   <div>
                     <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Duración</label>
-                    <input type="text" id="multi_srv_dur_${idx}" value="${s.duration || ''}" placeholder="ej: 3 a 5 semanas" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">
+                    <input type="text" id="multi_srv_dur_${idx}" value="${s.duration || ''}" placeholder="ej: 3 a 5 sem" style="width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--color-hairline);">
                   </div>
                   <div>
-                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Retoque (COP)</label>
-                    <input type="number" id="multi_srv_ret_${idx}" value="${s.retouch15_21 || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--color-hairline);">
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Ret. 15-17d</label>
+                    <input type="number" id="multi_srv_ret15_${idx}" value="${s.retouch15_17 || s.retouch15_21 || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--color-hairline);">
+                  </div>
+                  <div>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Ret. 18-21d</label>
+                    <input type="number" id="multi_srv_ret18_${idx}" value="${s.retouch18_21 || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--color-hairline);">
                   </div>
                 </div>
               </div>
@@ -1140,7 +1147,8 @@ class LookbookManager {
             const descInput = document.getElementById(`multi_srv_desc_${idx}`);
             const priceInput = document.getElementById(`multi_srv_price_${idx}`);
             const durInput = document.getElementById(`multi_srv_dur_${idx}`);
-            const retInput = document.getElementById(`multi_srv_ret_${idx}`);
+            const ret15Input = document.getElementById(`multi_srv_ret15_${idx}`) || document.getElementById(`multi_srv_ret_${idx}`);
+            const ret18Input = document.getElementById(`multi_srv_ret18_${idx}`);
             const sX = document.getElementById(`slider_x_srv_${idx}`);
             const sY = document.getElementById(`slider_y_srv_${idx}`);
 
@@ -1149,7 +1157,14 @@ class LookbookManager {
             if (descInput) s.desc = descInput.value.trim();
             if (priceInput) s.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
             if (durInput) s.duration = durInput.value.trim();
-            if (retInput) s.retouch15_21 = retInput.value.trim() === "" ? null : parseInt(retInput.value, 10);
+            if (ret15Input) {
+              const val = ret15Input.value.trim() === "" ? null : parseInt(ret15Input.value, 10);
+              s.retouch15_17 = val;
+              s.retouch15_21 = val;
+            }
+            if (ret18Input) {
+              s.retouch18_21 = ret18Input.value.trim() === "" ? null : parseInt(ret18Input.value, 10);
+            }
             if (sX && sY) s.imagePosition = `${sX.value}% ${sY.value}%`;
             if (this.currentBase64Uploads[`srv_${idx}`]) {
               s.image = this.currentBase64Uploads[`srv_${idx}`];

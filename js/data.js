@@ -166,7 +166,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 70000,
       retouchAvailable: true,
-      retouch15_21: 50000,
+      retouch15_17: 50000,
       image: "assets/img/page_img_5.jpeg",
       imagePosition: "center center",
       tags: ["Natural", "Sutil"]
@@ -183,7 +183,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 75000,
       retouchAvailable: true,
-      retouch15_21: 55000,
+      retouch15_17: 55000,
       image: "assets/img/page_img_6.jpeg",
       imagePosition: "center center",
       tags: ["Densidad", "Natural"]
@@ -202,7 +202,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 80000,
       retouchAvailable: true,
-      retouch15_21: 60000,
+      retouch15_17: 60000,
       image: "assets/img/page_img_7.jpeg",
       imagePosition: "center center",
       tags: ["Impacto", "Expresivo", "Tendencia"]
@@ -219,7 +219,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 80000,
       retouchAvailable: true,
-      retouch15_21: 60000,
+      retouch15_17: 60000,
       image: "assets/img/page_img_8.jpeg",
       imagePosition: "center center",
       tags: ["Definición", "Expresivo"]
@@ -312,7 +312,8 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "120 - 150 min",
       price: 95000,
       retouchAvailable: true,
-      retouch15_21: 65000,
+      retouch15_17: 60000,
+      retouch18_21: 65000,
       image: "assets/img/page_img_13.jpeg",
       imagePosition: "center center",
       tags: ["Wispy", "Tendencia", "Favorito"]
@@ -329,7 +330,8 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "120 - 150 min",
       price: 95000,
       retouchAvailable: true,
-      retouch15_21: 65000,
+      retouch15_17: 60000,
+      retouch18_21: 65000,
       image: "assets/img/page_img_14.jpeg",
       imagePosition: "center center",
       tags: ["Foxy", "Alargado"]
@@ -346,7 +348,8 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "120 - 150 min",
       price: 95000,
       retouchAvailable: true,
-      retouch15_21: 65000,
+      retouch15_17: 60000,
+      retouch18_21: 65000,
       image: "assets/img/page_img_15.jpeg",
       imagePosition: "center center",
       tags: ["Bratz", "Audaz", "Full Actitud"]
@@ -626,13 +629,15 @@ class CatalogState {
           ? cloudSrv.gallery.filter(g => g && g.src && typeof g.src === "string" && !g.src.startsWith("__overflow__:"))
           : (defSrv.gallery || []);
 
-        if (gallery.length === 0 && defSrv.gallery && defSrv.gallery.length > 0) {
-          gallery = defSrv.gallery;
-        }
+        const ret15 = cloudSrv.retouch15_17 !== undefined ? cloudSrv.retouch15_17 : (cloudSrv.retouch15_21 !== undefined ? cloudSrv.retouch15_21 : defSrv.retouch15_17);
+        const ret18 = cloudSrv.retouch18_21 !== undefined ? cloudSrv.retouch18_21 : defSrv.retouch18_21;
 
         return {
           ...defSrv,
           ...cloudSrv,
+          retouch15_17: ret15,
+          retouch15_21: ret15,
+          retouch18_21: ret18,
           image: img,
           beforeImage: beforeImg,
           afterImage: afterImg,

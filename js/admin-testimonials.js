@@ -203,7 +203,7 @@
       this.srvCustomPriceLabel = document.getElementById("srvCustomPriceLabel");
       this.srvDuration = document.getElementById("srvDuration");
       this.srvAppointmentTime = document.getElementById("srvAppointmentTime");
-      this.srvRetouch15_21 = document.getElementById("srvRetouch15_21");
+      this.srvRetouch15_17 = document.getElementById("srvRetouch15_17") || document.getElementById("srvRetouch15_21");
       this.srvRetouch18_21 = document.getElementById("srvRetouch18_21");
       this.srvBadge = document.getElementById("srvBadge");
       this.srvDesc = document.getElementById("srvDesc");
@@ -973,8 +973,8 @@
       if (this.srvCustomPriceLabel) this.srvCustomPriceLabel.value = "";
       this.srvDuration.value = "3 a 5 semanas";
       this.srvAppointmentTime.value = "90 - 120 min";
-      this.srvRetouch15_21.value = "";
-      this.srvRetouch18_21.value = "";
+      if (this.srvRetouch15_17) this.srvRetouch15_17.value = "";
+      if (this.srvRetouch18_21) this.srvRetouch18_21.value = "";
       this.srvBadge.value = "✨ Tendencia 2026";
       this.srvDesc.value = "";
       this.srvTags.value = "Efecto Especial, Exclusivo Danna Mesa";
@@ -1006,8 +1006,8 @@
       }
       this.srvDuration.value = srv.duration || "";
       this.srvAppointmentTime.value = srv.appointmentTime || "";
-      this.srvRetouch15_21.value = srv.retouch15_21 || "";
-      this.srvRetouch18_21.value = srv.retouch18_21 || "";
+      if (this.srvRetouch15_17) this.srvRetouch15_17.value = srv.retouch15_17 || srv.retouch15_21 || "";
+      if (this.srvRetouch18_21) this.srvRetouch18_21.value = srv.retouch18_21 || "";
       this.srvBadge.value = srv.badge || "";
       this.srvDesc.value = srv.desc || "";
       this.srvTags.value = Array.isArray(srv.tags) ? srv.tags.join(", ") : (srv.tags || "");
@@ -1182,8 +1182,8 @@
       const effectiveCustomPriceLabel = customPriceLabel || (price === null ? "Según pestañas elegidas" : null);
       const duration = this.srvDuration.value.trim();
       const appointmentTime = this.srvAppointmentTime.value.trim();
-      const retouch15_21 = this.srvRetouch15_21.value ? parseInt(this.srvRetouch15_21.value, 10) : null;
-      const retouch18_21 = this.srvRetouch18_21.value ? parseInt(this.srvRetouch18_21.value, 10) : null;
+      const retouch15_17 = (this.srvRetouch15_17 && this.srvRetouch15_17.value) ? parseInt(this.srvRetouch15_17.value, 10) : null;
+      const retouch18_21 = (this.srvRetouch18_21 && this.srvRetouch18_21.value) ? parseInt(this.srvRetouch18_21.value, 10) : null;
       const badge = this.srvBadge.value.trim();
       const desc = this.srvDesc.value.trim();
       const tags = this.srvTags.value.split(",").map(t => t.trim()).filter(Boolean);
@@ -1207,8 +1207,9 @@
             srv.customPriceLabel = effectiveCustomPriceLabel;
             srv.duration = duration;
             srv.appointmentTime = appointmentTime;
-            if (retouch15_21) srv.retouch15_21 = retouch15_21;
-            if (retouch18_21) srv.retouch18_21 = retouch18_21;
+            srv.retouch15_17 = retouch15_17;
+            srv.retouch15_21 = retouch15_17;
+            srv.retouch18_21 = retouch18_21;
             srv.badge = badge;
             srv.desc = desc;
             srv.tags = tags;
@@ -1229,7 +1230,8 @@
             customPriceLabel: effectiveCustomPriceLabel,
             duration,
             appointmentTime,
-            retouch15_21,
+            retouch15_17,
+            retouch15_21: retouch15_17,
             retouch18_21,
             badge,
             desc,
@@ -1862,18 +1864,22 @@
                     <textarea id="admin_srv_desc_${idx}" class="admin-form-textarea" rows="2">${s.desc || ''}</textarea>
                   </div>
 
-                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
                     <div>
                       <label class="admin-form-label" style="font-size: 10px;">Precio (COP)</label>
                       <input type="number" id="admin_srv_price_${idx}" class="admin-form-input" value="${s.price || ''}" placeholder="Opcional" style="color: var(--admin-primary); font-weight: 700;">
                     </div>
                     <div>
                       <label class="admin-form-label" style="font-size: 10px;">Duración</label>
-                      <input type="text" id="admin_srv_dur_${idx}" class="admin-form-input" value="${s.duration || ''}" placeholder="ej: 3 a 5 semanas">
+                      <input type="text" id="admin_srv_dur_${idx}" class="admin-form-input" value="${s.duration || ''}" placeholder="ej: 3 a 5 sem">
                     </div>
                     <div>
-                      <label class="admin-form-label" style="font-size: 10px;">Retoque (COP)</label>
-                      <input type="number" id="admin_srv_ret_${idx}" class="admin-form-input" value="${s.retouch15_21 || ''}" placeholder="Opcional">
+                      <label class="admin-form-label" style="font-size: 10px;">Ret. 15-17d</label>
+                      <input type="number" id="admin_srv_ret15_${idx}" class="admin-form-input" value="${s.retouch15_17 || s.retouch15_21 || ''}" placeholder="Opcional">
+                    </div>
+                    <div>
+                      <label class="admin-form-label" style="font-size: 10px;">Ret. 18-21d</label>
+                      <input type="number" id="admin_srv_ret18_${idx}" class="admin-form-input" value="${s.retouch18_21 || ''}" placeholder="Opcional">
                     </div>
                   </div>
                 </div>
@@ -2079,8 +2085,8 @@
               const subInput = document.getElementById(`admin_srv_sub_${idx}`);
               const descInput = document.getElementById(`admin_srv_desc_${idx}`);
               const priceInput = document.getElementById(`admin_srv_price_${idx}`);
-              const durInput = document.getElementById(`admin_srv_dur_${idx}`);
-              const retInput = document.getElementById(`admin_srv_ret_${idx}`);
+              const ret15Input = document.getElementById(`admin_srv_ret15_${idx}`) || document.getElementById(`admin_srv_ret_${idx}`);
+              const ret18Input = document.getElementById(`admin_srv_ret18_${idx}`);
               const sX = document.getElementById(`admin_slider_x_srv_${idx}`);
               const sY = document.getElementById(`admin_slider_y_srv_${idx}`);
 
@@ -2089,7 +2095,14 @@
               if (descInput) s.desc = descInput.value.trim();
               if (priceInput) s.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
               if (durInput) s.duration = durInput.value.trim();
-              if (retInput) s.retouch15_21 = retInput.value.trim() === "" ? null : parseInt(retInput.value, 10);
+              if (ret15Input) {
+                const val = ret15Input.value.trim() === "" ? null : parseInt(ret15Input.value, 10);
+                s.retouch15_17 = val;
+                s.retouch15_21 = val;
+              }
+              if (ret18Input) {
+                s.retouch18_21 = ret18Input.value.trim() === "" ? null : parseInt(ret18Input.value, 10);
+              }
               if (sX && sY) s.imagePosition = `${sX.value}% ${sY.value}%`;
               if (this.adminLbBase64Uploads[`srv_${idx}`]) {
                 s.image = this.adminLbBase64Uploads[`srv_${idx}`];
