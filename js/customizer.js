@@ -220,6 +220,8 @@ class CatalogCustomizer {
     // 3. Todos los Servicios
     data.services.forEach(s => {
       // Foto principal
+      const defSrv = typeof DEFAULT_CATALOG_DATA !== "undefined" ? DEFAULT_CATALOG_DATA.services.find(d => d.id === s.id) : null;
+      const srvImg = (s.image && !s.image.startsWith("__overflow__:")) ? s.image : (defSrv ? defSrv.image : "assets/img/page_img_1.jpeg");
       list.push({
         key: `service_${s.id}_main`,
         type: "service_main",
@@ -227,7 +229,7 @@ class CatalogCustomizer {
         category: s.categoryId,
         sectionLabel: this.getCategoryLabel(s.categoryId),
         title: s.name,
-        src: s.image || "assets/img/page_img_1.jpeg",
+        src: srvImg,
         pos: s.imagePosition || "center center",
         targetObj: s,
         prop: "image",

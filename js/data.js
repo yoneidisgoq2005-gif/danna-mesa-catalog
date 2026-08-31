@@ -565,9 +565,112 @@ const DEFAULT_CATALOG_DATA = {
  */
 class CatalogState {
   constructor() {
-    this.storageKey = "danna_mesa_catalog_v2026_v14";
+    this.storageKey = "danna_mesa_catalog_v2026_v15";
     this.data = this.loadData();
     this.initCloudSync();
+  }
+
+  /**
+   * Sanitiza y fusiona datos de Firestore o localStorage con DEFAULT_CATALOG_DATA.
+   * Si alguna imagen está rota, vacía o contiene marcas de overflow, se restaura
+   * automáticamente la imagen de alta definición por defecto para ese servicio específico.
+   */
+  _sanitizeAndMerge(cloudData) {
+    if (!cloudData || typeof cloudData !== "object") {
+      return JSON.parse(JSON.stringify(DEFAULT_CATALOG_DATA));
+    }
+
+    const def = DEFAULT_CATALOG_DATA;
+    const merged = { ...def, ...cloudData };
+
+    // 1. Studio Info
+    merged.studio = { ...def.studio, ...(cloudData.studio || {}) };
+
+    // 2. Hero
+    merged.hero = { ...def.hero, ...(cloudData.hero || {}) };
+    if (!merged.hero.image || typeof merged.hero.image !== "string" || merged.hero.image.startsWith("__overflow__:") || merged.hero.image.trim() === "") {
+      merged.hero.image = def.hero.image;
+    }
+
+    // 3. Combo Banner
+    merged.comboBanner = { ...def.comboBanner, ...(cloudData.comboBanner || {}) };
+    if (!merged.comboBanner.image || typeof merged.comboBanner.image !== "string" || merged.comboBanner.image.startsWith("__overflow__:") || merged.comboBanner.image.trim() === "") {
+      merged.comboBanner.image = def.comboBanner.image;
+    }
+
+    // 4. Servicios & Efectos
+    if (Array.isArray(cloudData.services) && cloudData.services.length > 0) {
+      const mergedServices = def.services.map(defSrv => {
+        const cloudSrv = cloudData.services.find(s => s && s.id === defSrv.id);
+        if (!cloudSrv) return JSON.parse(JSON.stringify(defSrv));
+
+        // Determinar imagen principal
+        let img = cloudSrv.image;
+        if (!img || typeof img !== "string" || img.startsWith("__overflow__:") || img.trim() === "") {
+          img = defSrv.image;
+        }
+
+        // Determinar fotos antes/después
+        let beforeImg = cloudSrv.beforeImage || defSrv.beforeImage;
+        if (beforeImg && (typeof beforeImg !== "string" || beforeImg.startsWith("__overflow__:"))) {
+          beforeImg = defSrv.beforeImage;
+        }
+
+        let afterImg = cloudSrv.afterImage || defSrv.afterImage;
+        if (afterImg && (typeof afterImg !== "string" || afterImg.startsWith("__overflow__:"))) {
+          afterImg = defSrv.afterImage;
+        }
+
+        // Determinar galería de clientas
+        let gallery = Array.isArray(cloudSrv.gallery)
+          ? cloudSrv.gallery.filter(g => g && g.src && typeof g.src === "string" && !g.src.startsWith("__overflow__:"))
+          : (defSrv.gallery || []);
+
+        if (gallery.length === 0 && defSrv.gallery && defSrv.gallery.length > 0) {
+          gallery = defSrv.gallery;
+        }
+
+        return {
+          ...defSrv,
+          ...cloudSrv,
+          image: img,
+          beforeImage: beforeImg,
+          afterImage: afterImg,
+          gallery: gallery
+        };
+      });
+
+      // Añadir servicios personalizados nuevos creados por el usuario
+      cloudData.services.forEach(cloudSrv => {
+        if (cloudSrv && cloudSrv.id && !def.services.some(d => d.id === cloudSrv.id)) {
+          let img = cloudSrv.image;
+          if (!img || typeof img !== "string" || img.startsWith("__overflow__:") || img.trim() === "") {
+            img = "assets/img/page_img_1.jpeg";
+          }
+          mergedServices.push({
+            ...cloudSrv,
+            image: img
+          });
+        }
+      });
+
+      merged.services = mergedServices;
+    } else {
+      merged.services = JSON.parse(JSON.stringify(def.services));
+    }
+
+    // 5. Lookbook, Políticas, Tema & Testimonios
+    if (cloudData.lookbook) merged.lookbook = { ...def.lookbook, ...cloudData.lookbook };
+    if (cloudData.retouchPolicies) merged.retouchPolicies = { ...def.retouchPolicies, ...cloudData.retouchPolicies };
+    if (cloudData.theme) merged.theme = { ...def.theme, ...cloudData.theme };
+    if (Array.isArray(cloudData.testimonials)) {
+      merged.testimonials = cloudData.testimonials.filter(t => t && (t.image || t.imageUrl) && !(t.image || t.imageUrl).startsWith("__overflow__:"));
+      if (merged.testimonials.length === 0 && Array.isArray(def.testimonials)) {
+        merged.testimonials = def.testimonials;
+      }
+    }
+
+    return merged;
   }
 
   initCloudSync() {
@@ -579,31 +682,12 @@ class CatalogState {
         if (firebase.firestore) {
           const db = firebase.firestore();
           console.log("[CatalogState] Conectando sincronización en tiempo real con Firestore...");
-          db.collection("catalog_config").doc("main").onSnapshot(async (doc) => {
+          db.collection("catalog_config").doc("main").onSnapshot((doc) => {
             if (doc.exists) {
               const cloudData = doc.data();
               if (cloudData && typeof cloudData === "object") {
-                console.log("[CatalogState] ☁️ Datos actualizados desde la nube");
-
-                // Load overflow image docs
-                let overflowMap = {};
-                try {
-                  const overflowSnap = await db.collection("catalog_config")
-                    .where(firebase.firestore.FieldPath.documentId(), ">=", "images_")
-                    .where(firebase.firestore.FieldPath.documentId(), "<=", "images_\uf8ff")
-                    .get();
-                  overflowSnap.forEach(oDoc => {
-                    const oData = oDoc.data();
-                    Object.assign(overflowMap, oData);
-                  });
-                } catch (oErr) {
-                  console.warn("[CatalogState] No overflow images loaded:", oErr);
-                }
-
-                // Reassemble overflow references
-                this._reassembleOverflow(cloudData, overflowMap);
-
-                this.data = { ...DEFAULT_CATALOG_DATA, ...cloudData };
+                console.log("[CatalogState] ☁️ Datos recibidos y sincronizados desde Firestore");
+                this.data = this._sanitizeAndMerge(cloudData);
                 try {
                   localStorage.setItem(this.storageKey, JSON.stringify(this.data));
                 } catch (e) {}
@@ -620,55 +704,11 @@ class CatalogState {
     }
   }
 
-  _reassembleOverflow(data, overflowMap) {
-    if (!overflowMap || Object.keys(overflowMap).length === 0) return;
-
-    // Reassemble service images
-    if (Array.isArray(data.services)) {
-      data.services.forEach((srv) => {
-        if (srv.image && typeof srv.image === "string" && srv.image.startsWith("__overflow__:")) {
-          const key = srv.image.replace("__overflow__:", "");
-          if (overflowMap[key]) srv.image = overflowMap[key];
-        }
-        if (Array.isArray(srv.gallery)) {
-          srv.gallery.forEach((g) => {
-            if (g.src && typeof g.src === "string" && g.src.startsWith("__overflow__:")) {
-              const key = g.src.replace("__overflow__:", "");
-              if (overflowMap[key]) g.src = overflowMap[key];
-            }
-          });
-        }
-      });
-    }
-
-    // Reassemble hero/comboBanner
-    if (data.hero && data.hero.image && data.hero.image.startsWith("__overflow__:")) {
-      const key = data.hero.image.replace("__overflow__:", "");
-      if (overflowMap[key]) data.hero.image = overflowMap[key];
-    }
-    if (data.comboBanner && data.comboBanner.image && data.comboBanner.image.startsWith("__overflow__:")) {
-      const key = data.comboBanner.image.replace("__overflow__:", "");
-      if (overflowMap[key]) data.comboBanner.image = overflowMap[key];
-    }
-
-    // Reassemble testimonials
-    if (Array.isArray(data.testimonials)) {
-      data.testimonials.forEach((t) => {
-        const imgField = t.image ? "image" : "imageUrl";
-        const val = t[imgField];
-        if (val && typeof val === "string" && val.startsWith("__overflow__:")) {
-          const key = val.replace("__overflow__:", "");
-          if (overflowMap[key]) t[imgField] = overflowMap[key];
-        }
-      });
-    }
-  }
-
   loadData() {
     try {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
-        return { ...DEFAULT_CATALOG_DATA, ...JSON.parse(saved) };
+        return this._sanitizeAndMerge(JSON.parse(saved));
       }
     } catch (e) {
       console.warn("No se pudo leer de localStorage:", e);
@@ -858,21 +898,29 @@ class CatalogState {
 
   /** Replace any __overflow__:xxx placeholders with default asset paths */
   _resolveOverflowRefs(data) {
+    const def = DEFAULT_CATALOG_DATA;
     if (Array.isArray(data.services)) {
-      data.services.forEach((srv, si) => {
+      data.services.forEach((srv) => {
+        const defSrv = def.services.find(d => d.id === srv.id);
         if (srv.image && typeof srv.image === "string" && srv.image.startsWith("__overflow__:")) {
-          srv.image = `assets/img/page_img_${Math.min(si + 1, 24)}.jpeg`;
+          srv.image = defSrv ? defSrv.image : "assets/img/page_img_1.jpeg";
+        }
+        if (srv.beforeImage && typeof srv.beforeImage === "string" && srv.beforeImage.startsWith("__overflow__:")) {
+          srv.beforeImage = defSrv ? defSrv.beforeImage : null;
+        }
+        if (srv.afterImage && typeof srv.afterImage === "string" && srv.afterImage.startsWith("__overflow__:")) {
+          srv.afterImage = defSrv ? defSrv.afterImage : null;
         }
         if (Array.isArray(srv.gallery)) {
-          srv.gallery = srv.gallery.filter(g => !g.src || !g.src.startsWith("__overflow__:"));
+          srv.gallery = srv.gallery.filter(g => g && g.src && !g.src.startsWith("__overflow__:"));
         }
       });
     }
     if (data.hero && data.hero.image && data.hero.image.startsWith("__overflow__:")) {
-      data.hero.image = "assets/img/page_img_1.jpeg";
+      data.hero.image = def.hero.image;
     }
     if (data.comboBanner && data.comboBanner.image && data.comboBanner.image.startsWith("__overflow__:")) {
-      data.comboBanner.image = "assets/img/page_img_25.png";
+      data.comboBanner.image = def.comboBanner.image;
     }
     if (Array.isArray(data.testimonials)) {
       data.testimonials.forEach((t) => {
@@ -967,12 +1015,15 @@ class CatalogState {
         else if (srv.categoryId === "experiencias") catGroup = "experiencias";
         else if (srv.categoryId === "cuidados") catGroup = "cuidados";
 
+        const defSrv = DEFAULT_CATALOG_DATA.services.find(d => d.id === srv.id);
+        const srvImg = (srv.image && !srv.image.startsWith("__overflow__:")) ? srv.image : (defSrv ? defSrv.image : "assets/img/page_img_1.jpeg");
+
         photos.push({
           id: `photo_srv_${srv.id}`,
           category: catGroup,
           sectionLabel: srv.type || srv.categoryId,
           title: `${srv.name} (Principal)`,
-          currentImg: srv.image || "assets/img/page_img_1.jpeg",
+          currentImg: srvImg,
           position: srv.imagePosition || "center 30%",
           type: "service",
           serviceId: srv.id,
