@@ -15,6 +15,14 @@ class CatalogApp {
     this.init();
   }
 
+  /** Returns a usable image src, falling back if the value is an unresolved overflow ref or empty */
+  safeImg(src, fallback) {
+    if (!src || (typeof src === "string" && src.startsWith("__overflow__:"))) {
+      return fallback || "assets/img/page_img_1.jpeg";
+    }
+    return src;
+  }
+
   init() {
     this.bindEvents();
     this.renderHeaderAndHero();
@@ -249,7 +257,7 @@ class CatalogApp {
 
     const heroData = data.hero || DEFAULT_CATALOG_DATA.hero;
     if (heroMedia) {
-      if (heroData.image) heroMedia.style.backgroundImage = `url('${heroData.image}')`;
+      if (heroData.image) heroMedia.style.backgroundImage = `url('${this.safeImg(heroData.image)}')`;
       if (heroData.imagePosition) heroMedia.style.backgroundPosition = heroData.imagePosition;
     }
     if (heroBadge) heroBadge.textContent = heroData.badge || `${data.studio.tagline || 'Studio Experience'}`;
@@ -275,7 +283,7 @@ class CatalogApp {
       `;
     }
     if (comboImg && comboData.image) {
-      comboImg.src = comboData.image;
+      comboImg.src = this.safeImg(comboData.image);
       if (comboData.imagePosition) comboImg.style.objectPosition = comboData.imagePosition;
     }
 
@@ -458,10 +466,10 @@ class CatalogApp {
         mediaHtml = `
           <div class="before-after-container" data-service-id="${service.id}">
             <div class="ba-image-wrapper">
-              <img src="${service.beforeImage}" alt="Antes - ${service.name}" loading="lazy" style="object-position: ${service.imagePosition || 'center 35%'};">
+              <img src="${this.safeImg(service.beforeImage)}" alt="Antes - ${service.name}" loading="lazy" style="object-position: ${service.imagePosition || 'center 35%'};">
             </div>
             <div class="ba-after-layer">
-              <img src="${service.afterImage}" alt="Después - ${service.name}" loading="lazy" style="object-position: ${service.imagePosition || 'center 35%'};">
+              <img src="${this.safeImg(service.afterImage)}" alt="Después - ${service.name}" loading="lazy" style="object-position: ${service.imagePosition || 'center 35%'};">
             </div>
             <div class="ba-handle">⬌</div>
             <span class="ba-badge before">Antes</span>
@@ -471,7 +479,7 @@ class CatalogApp {
       } else {
         mediaHtml = `
           <div class="service-card-media">
-            <img src="${service.image || 'assets/img/page_img_1.jpeg'}" alt="${service.name}" loading="lazy" style="object-position: ${service.imagePosition || 'center center'};">
+            <img src="${this.safeImg(service.image)}" alt="${service.name}" loading="lazy" style="object-position: ${service.imagePosition || 'center center'};">
             ${tagsHtml}
           </div>
         `;
@@ -505,13 +513,13 @@ class CatalogApp {
         const mainLabel = isBa ? 'Antes/Desp.' : 'Principal';
         galleryThumbsHtml = `
           <div class="service-gallery-thumbs" title="Ver resultados en diferentes clientas">
-            <button class="gallery-thumb-btn active" data-card-thumb="${service.id}" data-target-type="${isBa ? 'ba' : 'main'}" data-src="${service.image}" data-pos="${service.imagePosition || 'center 30%'}" data-title="${service.name} (Principal)" title="${isBa ? 'Ver Antes y Después' : 'Foto Principal'}">
-              <img src="${isBa ? service.afterImage : service.image}" alt="${service.name}">
+            <button class="gallery-thumb-btn active" data-card-thumb="${service.id}" data-target-type="${isBa ? 'ba' : 'main'}" data-src="${this.safeImg(service.image)}" data-pos="${service.imagePosition || 'center 30%'}" data-title="${service.name} (Principal)" title="${isBa ? 'Ver Antes y Después' : 'Foto Principal'}">
+              <img src="${isBa ? this.safeImg(service.afterImage) : this.safeImg(service.image)}" alt="${service.name}">
               <span class="thumb-label">${mainLabel}</span>
             </button>
             ${service.gallery.map((g, idx) => `
-              <button class="gallery-thumb-btn" data-card-thumb="${service.id}" data-target-type="gallery" data-src="${g.src}" data-pos="${g.position || 'center 30%'}" data-title="${service.name} — ${g.title || `Clienta 0${idx + 1}`}${g.subtitle ? ': ' + g.subtitle : ''}" title="${g.title || `Clienta 0${idx + 1}`}">
-                <img src="${g.src}" alt="${g.title || `Clienta 0${idx + 1}`}">
+              <button class="gallery-thumb-btn" data-card-thumb="${service.id}" data-target-type="gallery" data-src="${this.safeImg(g.src)}" data-pos="${g.position || 'center 30%'}" data-title="${service.name} — ${g.title || `Clienta 0${idx + 1}`}${g.subtitle ? ': ' + g.subtitle : ''}" title="${g.title || `Clienta 0${idx + 1}`}">
+                <img src="${this.safeImg(g.src)}" alt="${g.title || `Clienta 0${idx + 1}`}">
                 <span class="thumb-label">${g.title || `Clienta 0${idx + 1}`}</span>
               </button>
             `).join("")}
@@ -625,10 +633,10 @@ class CatalogApp {
           host.innerHTML = `
             <div class="before-after-container" data-service-id="${service.id}">
               <div class="ba-image-wrapper">
-                <img src="${service.beforeImage}" alt="Antes - ${service.name}" style="object-position: ${service.imagePosition || 'center 35%'};">
+                <img src="${this.safeImg(service.beforeImage)}" alt="Antes - ${service.name}" style="object-position: ${service.imagePosition || 'center 35%'};">
               </div>
               <div class="ba-after-layer">
-                <img src="${service.afterImage}" alt="Después - ${service.name}" style="object-position: ${service.imagePosition || 'center 35%'};">
+                <img src="${this.safeImg(service.afterImage)}" alt="Después - ${service.name}" style="object-position: ${service.imagePosition || 'center 35%'};">
               </div>
               <div class="ba-handle">⬌</div>
               <span class="ba-badge before">Antes</span>
@@ -638,8 +646,8 @@ class CatalogApp {
           this.initBeforeAfterSliders();
         } else if (type === "main") {
           host.innerHTML = `
-            <div class="service-card-media" data-lightbox-src="${service.image}" data-lightbox-caption="${service.name} (Principal)" style="cursor: pointer;">
-              <img src="${service.image || 'assets/img/page_img_1.jpeg'}" alt="${service.name}" style="object-position: ${service.imagePosition || 'center center'};">
+            <div class="service-card-media" data-lightbox-src="${this.safeImg(service.image)}" data-lightbox-caption="${service.name} (Principal)" style="cursor: pointer;">
+              <img src="${this.safeImg(service.image)}" alt="${service.name}" style="object-position: ${service.imagePosition || 'center center'};">
               <div class="service-badges-container">
                 <span class="service-badge-tag">${service.badge || service.type || 'Principal'}</span>
               </div>
