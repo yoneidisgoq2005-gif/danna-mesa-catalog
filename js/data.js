@@ -688,6 +688,75 @@ class CatalogState {
     }
   }
 
+  /** Recompress a base64 image string to smaller dimensions/quality using canvas */
+  _shrinkBase64(base64Str, maxDim, quality) {
+    return new Promise((resolve) => {
+      if (!base64Str || !base64Str.startsWith("data:")) { resolve(base64Str); return; }
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => resolve(base64Str);
+      img.src = base64Str;
+    });
+  }
+
+  /** Shrink all base64 images in payload to keep total under Firestore 1MB limit */
+  async _shrinkPayloadImages(payload) {
+    const MAX_LEN = 40000; // ~30KB threshold per image
+    const SHRINK_DIM = 600;
+    const SHRINK_Q = 0.50;
+
+    const promises = [];
+
+    // Services
+    if (Array.isArray(payload.services)) {
+      payload.services.forEach((srv) => {
+        if (srv.image && srv.image.startsWith("data:") && srv.image.length > MAX_LEN) {
+          promises.push(this._shrinkBase64(srv.image, SHRINK_DIM, SHRINK_Q).then(r => { srv.image = r; }));
+        }
+        if (Array.isArray(srv.gallery)) {
+          srv.gallery.forEach((g) => {
+            if (g.src && g.src.startsWith("data:") && g.src.length > MAX_LEN) {
+              promises.push(this._shrinkBase64(g.src, SHRINK_DIM, SHRINK_Q).then(r => { g.src = r; }));
+            }
+          });
+        }
+      });
+    }
+
+    // Hero
+    if (payload.hero && payload.hero.image && payload.hero.image.startsWith("data:") && payload.hero.image.length > MAX_LEN) {
+      promises.push(this._shrinkBase64(payload.hero.image, SHRINK_DIM, SHRINK_Q).then(r => { payload.hero.image = r; }));
+    }
+
+    // Combo Banner
+    if (payload.comboBanner && payload.comboBanner.image && payload.comboBanner.image.startsWith("data:") && payload.comboBanner.image.length > MAX_LEN) {
+      promises.push(this._shrinkBase64(payload.comboBanner.image, SHRINK_DIM, SHRINK_Q).then(r => { payload.comboBanner.image = r; }));
+    }
+
+    // Testimonials
+    if (Array.isArray(payload.testimonials)) {
+      payload.testimonials.forEach((t) => {
+        const field = t.image ? "image" : "imageUrl";
+        const val = t[field];
+        if (val && val.startsWith("data:") && val.length > MAX_LEN) {
+          promises.push(this._shrinkBase64(val, SHRINK_DIM, SHRINK_Q).then(r => { t[field] = r; }));
+        }
+      });
+    }
+
+    await Promise.all(promises);
+  }
+
   async saveToCloud(newData) {
     this.saveData(newData);
     try {
@@ -699,81 +768,33 @@ class CatalogState {
           const db = firebase.firestore();
           const payload = JSON.parse(JSON.stringify(this.data));
 
-          // Estimate size and strip heavy base64 images into overflow doc
-          const overflowImages = {};
-          const MAX_B64_LEN = 30000; // ~22KB per image max inline
+          // Resolve any leftover __overflow__ references from previous saves
+          // by replacing them with fallback asset paths
+          this._resolveOverflowRefs(payload);
 
-          // Strip service images
-          if (Array.isArray(payload.services)) {
-            payload.services.forEach((srv, si) => {
-              if (srv.image && srv.image.startsWith("data:") && srv.image.length > MAX_B64_LEN) {
-                overflowImages[`srv_${si}_image`] = srv.image;
-                srv.image = `__overflow__:srv_${si}_image`;
-              }
-              if (Array.isArray(srv.gallery)) {
-                srv.gallery.forEach((g, gi) => {
-                  if (g.src && g.src.startsWith("data:") && g.src.length > MAX_B64_LEN) {
-                    overflowImages[`srv_${si}_gal_${gi}`] = g.src;
-                    g.src = `__overflow__:srv_${si}_gal_${gi}`;
-                  }
-                });
-              }
-            });
-          }
+          // Auto-shrink all oversized base64 images to fit within 1MB
+          await this._shrinkPayloadImages(payload);
 
-          // Strip hero/comboBanner images
-          if (payload.hero && payload.hero.image && payload.hero.image.startsWith("data:") && payload.hero.image.length > MAX_B64_LEN) {
-            overflowImages["hero_image"] = payload.hero.image;
-            payload.hero.image = "__overflow__:hero_image";
-          }
-          if (payload.comboBanner && payload.comboBanner.image && payload.comboBanner.image.startsWith("data:") && payload.comboBanner.image.length > MAX_B64_LEN) {
-            overflowImages["comboBanner_image"] = payload.comboBanner.image;
-            payload.comboBanner.image = "__overflow__:comboBanner_image";
-          }
-
-          // Strip testimonial images
-          if (Array.isArray(payload.testimonials)) {
-            payload.testimonials.forEach((t, ti) => {
-              const imgKey = t.image || t.imageUrl;
-              const imgField = t.image ? "image" : "imageUrl";
-              if (imgKey && imgKey.startsWith("data:") && imgKey.length > MAX_B64_LEN) {
-                overflowImages[`test_${ti}`] = imgKey;
-                t[imgField] = `__overflow__:test_${ti}`;
-              }
-            });
-          }
-
-          // Write main doc
+          // Write single document
           await db.collection("catalog_config").doc("main").set({
             ...payload,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
 
-          // Write overflow images in chunks (each doc max ~900KB)
-          const overflowKeys = Object.keys(overflowImages);
-          if (overflowKeys.length > 0) {
-            const CHUNK_MAX = 800000; // ~800KB per overflow doc
-            let chunkIdx = 0;
-            let currentChunk = {};
-            let currentSize = 0;
-
-            for (const key of overflowKeys) {
-              const valSize = overflowImages[key].length;
-              if (currentSize + valSize > CHUNK_MAX && currentSize > 0) {
-                await db.collection("catalog_config").doc(`images_${chunkIdx}`).set(currentChunk);
-                chunkIdx++;
-                currentChunk = {};
-                currentSize = 0;
-              }
-              currentChunk[key] = overflowImages[key];
-              currentSize += valSize;
-            }
-            if (Object.keys(currentChunk).length > 0) {
-              await db.collection("catalog_config").doc(`images_${chunkIdx}`).set(currentChunk);
-            }
+          // Clean up any old overflow docs
+          try {
+            const overflowSnap = await db.collection("catalog_config")
+              .where(firebase.firestore.FieldPath.documentId(), ">=", "images_")
+              .where(firebase.firestore.FieldPath.documentId(), "<=", "images_\uf8ff")
+              .get();
+            const batch = db.batch();
+            overflowSnap.forEach(oDoc => batch.delete(oDoc.ref));
+            if (!overflowSnap.empty) await batch.commit();
+          } catch (cleanErr) {
+            console.warn("[CatalogState] Overflow cleanup notice:", cleanErr);
           }
 
-          console.log(`[CatalogState] ✓ Datos guardados en Firestore (${overflowKeys.length} imágenes en overflow)`);
+          console.log("[CatalogState] ✓ Datos guardados en Firestore (imágenes optimizadas)");
           return true;
         }
       }
@@ -788,6 +809,34 @@ class CatalogState {
       throw err;
     }
     return false;
+  }
+
+  /** Replace any __overflow__:xxx placeholders with default asset paths */
+  _resolveOverflowRefs(data) {
+    if (Array.isArray(data.services)) {
+      data.services.forEach((srv, si) => {
+        if (srv.image && typeof srv.image === "string" && srv.image.startsWith("__overflow__:")) {
+          srv.image = `assets/img/page_img_${Math.min(si + 1, 24)}.jpeg`;
+        }
+        if (Array.isArray(srv.gallery)) {
+          srv.gallery = srv.gallery.filter(g => !g.src || !g.src.startsWith("__overflow__:"));
+        }
+      });
+    }
+    if (data.hero && data.hero.image && data.hero.image.startsWith("__overflow__:")) {
+      data.hero.image = "assets/img/page_img_1.jpeg";
+    }
+    if (data.comboBanner && data.comboBanner.image && data.comboBanner.image.startsWith("__overflow__:")) {
+      data.comboBanner.image = "assets/img/page_img_25.png";
+    }
+    if (Array.isArray(data.testimonials)) {
+      data.testimonials.forEach((t) => {
+        const field = t.image ? "image" : "imageUrl";
+        if (t[field] && t[field].startsWith("__overflow__:")) {
+          t[field] = "assets/img/page_img_1.jpeg";
+        }
+      });
+    }
   }
 
   resetToDefaults() {
