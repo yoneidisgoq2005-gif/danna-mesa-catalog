@@ -372,7 +372,7 @@ class LookbookManager {
                   <div class="desc">${s1.desc}</div>
                   <div class="lb-spec-row"><span class="l">Duración</span><span class="v">${s1.duration || '3-5 semanas'}</span></div>
                   <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(s1.price)}</span></div>
-                  ${(s1.retouch15_17 || s1.retouch15_21) ? `<div class="lb-spec-row"><span class="l">Retoque (15-17d)</span><span class="v">${this.state.formatMoney(s1.retouch15_17 || s1.retouch15_21)}</span></div>` : ''}
+                  ${(s1.retouch15_17 || s1.retouch15_21) ? `<div class="lb-spec-row"><span class="l">${s1.retouch18_21 ? 'Retoque (15-17d)' : 'Retoque (15-21d)'}</span><span class="v">${this.state.formatMoney(s1.retouch15_17 || s1.retouch15_21)}</span></div>` : ''}
                   ${s1.retouch18_21 ? `<div class="lb-spec-row"><span class="l">Retoque (18-21d)</span><span class="v">${this.state.formatMoney(s1.retouch18_21)}</span></div>` : ''}
                 </div>
               </div>
@@ -597,7 +597,7 @@ class LookbookManager {
               <div class="desc">${s1.desc || ''}</div>
               <div class="lb-spec-row"><span class="l">Duración</span><span class="v">${s1.duration || '3-5 semanas'}</span></div>
               <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(s1.price)}</span></div>
-              ${(s1.retouch15_17 || s1.retouch15_21) ? `<div class="lb-spec-row"><span class="l">Retoque (15-17d)</span><span class="v">${this.state.formatMoney(s1.retouch15_17 || s1.retouch15_21)}</span></div>` : ''}
+              ${(s1.retouch15_17 || s1.retouch15_21) ? `<div class="lb-spec-row"><span class="l">${s1.retouch18_21 ? 'Retoque (15-17d)' : 'Retoque (15-21d)'}</span><span class="v">${this.state.formatMoney(s1.retouch15_17 || s1.retouch15_21)}</span></div>` : ''}
               ${s1.retouch18_21 ? `<div class="lb-spec-row"><span class="l">Retoque (18-21d)</span><span class="v">${this.state.formatMoney(s1.retouch18_21)}</span></div>` : ''}
             </div>
           </div>
@@ -613,7 +613,7 @@ class LookbookManager {
                 <div class="desc">${s2.desc || ''}</div>
                 <div class="lb-spec-row"><span class="l">Duración</span><span class="v">${s2.duration || '3-5 semanas'}</span></div>
                 <div class="lb-spec-row"><span class="l">Valor</span><span class="v">${this.state.formatMoney(s2.price)}</span></div>
-                ${(s2.retouch15_17 || s2.retouch15_21) ? `<div class="lb-spec-row"><span class="l">Retoque (15-17d)</span><span class="v">${this.state.formatMoney(s2.retouch15_17 || s2.retouch15_21)}</span></div>` : ''}
+                ${(s2.retouch15_17 || s2.retouch15_21) ? `<div class="lb-spec-row"><span class="l">${s2.retouch18_21 ? 'Retoque (15-17d)' : 'Retoque (15-21d)'}</span><span class="v">${this.state.formatMoney(s2.retouch15_17 || s2.retouch15_21)}</span></div>` : ''}
                 ${s2.retouch18_21 ? `<div class="lb-spec-row"><span class="l">Retoque (18-21d)</span><span class="v">${this.state.formatMoney(s2.retouch18_21)}</span></div>` : ''}
               </div>
             </div>
@@ -910,7 +910,7 @@ class LookbookManager {
                     <input type="text" id="multi_srv_dur_${idx}" value="${s.duration || ''}" placeholder="ej: 3 a 5 sem" style="width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--color-hairline);">
                   </div>
                   <div>
-                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Ret. 15-17d</label>
+                    <label style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Ret. 15-17d/21d</label>
                     <input type="number" id="multi_srv_ret15_${idx}" value="${s.retouch15_17 || s.retouch15_21 || ''}" placeholder="Opcional" style="width: 100%; padding: 8px 8px; border-radius: 6px; border: 1px solid var(--color-hairline);">
                   </div>
                   <div>

@@ -1874,7 +1874,7 @@
                       <input type="text" id="admin_srv_dur_${idx}" class="admin-form-input" value="${s.duration || ''}" placeholder="ej: 3 a 5 sem">
                     </div>
                     <div>
-                      <label class="admin-form-label" style="font-size: 10px;">Ret. 15-17d</label>
+                      <label class="admin-form-label" style="font-size: 10px;">Ret. 15-17d/21d</label>
                       <input type="number" id="admin_srv_ret15_${idx}" class="admin-form-input" value="${s.retouch15_17 || s.retouch15_21 || ''}" placeholder="Opcional">
                     </div>
                     <div>
