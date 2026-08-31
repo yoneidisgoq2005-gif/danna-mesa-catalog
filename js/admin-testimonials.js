@@ -200,6 +200,7 @@
       this.srvCategory = document.getElementById("srvCategory");
       this.srvType = document.getElementById("srvType");
       this.srvPrice = document.getElementById("srvPrice");
+      this.srvCustomPriceLabel = document.getElementById("srvCustomPriceLabel");
       this.srvDuration = document.getElementById("srvDuration");
       this.srvAppointmentTime = document.getElementById("srvAppointmentTime");
       this.srvRetouch15_21 = document.getElementById("srvRetouch15_21");
@@ -960,6 +961,7 @@
       this.srvCategory.value = "extensiones";
       this.srvType.value = "Diseño Exclusivo";
       this.srvPrice.value = "";
+      if (this.srvCustomPriceLabel) this.srvCustomPriceLabel.value = "";
       this.srvDuration.value = "3 a 5 semanas";
       this.srvAppointmentTime.value = "90 - 120 min";
       this.srvRetouch15_21.value = "";
@@ -989,7 +991,10 @@
       this.srvName.value = srv.name || "";
       this.srvCategory.value = srv.categoryId || "extensiones";
       this.srvType.value = srv.subtitle || srv.type || "";
-      this.srvPrice.value = srv.price || "";
+      this.srvPrice.value = (srv.price !== null && srv.price !== undefined && !isNaN(Number(srv.price))) ? srv.price : "";
+      if (this.srvCustomPriceLabel) {
+        this.srvCustomPriceLabel.value = srv.customPriceLabel || (srv.price ? "" : "Según pestañas elegidas");
+      }
       this.srvDuration.value = srv.duration || "";
       this.srvAppointmentTime.value = srv.appointmentTime || "";
       this.srvRetouch15_21.value = srv.retouch15_21 || "";
@@ -1162,7 +1167,10 @@
       const name = this.srvName.value.trim();
       const categoryId = this.srvCategory.value;
       const subtitle = this.srvType.value.trim();
-      const price = parseInt(this.srvPrice.value, 10) || 0;
+      const priceVal = this.srvPrice.value.trim();
+      const price = priceVal === "" ? null : parseInt(priceVal, 10);
+      const customPriceLabel = this.srvCustomPriceLabel ? this.srvCustomPriceLabel.value.trim() : "";
+      const effectiveCustomPriceLabel = customPriceLabel || (price === null ? "Según pestañas elegidas" : null);
       const duration = this.srvDuration.value.trim();
       const appointmentTime = this.srvAppointmentTime.value.trim();
       const retouch15_21 = this.srvRetouch15_21.value ? parseInt(this.srvRetouch15_21.value, 10) : null;
@@ -1187,6 +1195,7 @@
             srv.subtitle = subtitle;
             srv.type = subtitle;
             srv.price = price;
+            srv.customPriceLabel = effectiveCustomPriceLabel;
             srv.duration = duration;
             srv.appointmentTime = appointmentTime;
             if (retouch15_21) srv.retouch15_21 = retouch15_21;
@@ -1208,6 +1217,7 @@
             subtitle,
             type: subtitle,
             price,
+            customPriceLabel: effectiveCustomPriceLabel,
             duration,
             appointmentTime,
             retouch15_21,

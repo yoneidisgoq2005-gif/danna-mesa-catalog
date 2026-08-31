@@ -20,7 +20,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   
   <!-- Catálogo Base Data State -->
-  <script src="js/data.js?v=18"></script>
+  <script src="js/data.js?v=24"></script>
 </head>
 <body>
 
@@ -677,11 +677,15 @@
           <input type="text" id="srvType" class="admin-form-input" placeholder="Ej: 01 · Resultado sutil, Efecto Exclusivo, etc.">
         </div>
 
-        <!-- Precio & Duración -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <!-- Precio, Tarifa Dinámica & Duración -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
           <div class="admin-form-group">
-            <label class="admin-form-label" for="srvPrice">Valor / Precio (COP) *</label>
-            <input type="number" id="srvPrice" class="admin-form-input" placeholder="Ej: 90000" required>
+            <label class="admin-form-label" for="srvPrice">Precio Fijo (COP)</label>
+            <input type="number" id="srvPrice" class="admin-form-input" placeholder="Ej: 90000 (Vacío si es dinámico)">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="srvCustomPriceLabel">Texto de Tarifa Dinámica</label>
+            <input type="text" id="srvCustomPriceLabel" class="admin-form-input" placeholder="Ej: Según pestañas elegidas">
           </div>
           <div class="admin-form-group">
             <label class="admin-form-label" for="srvDuration">Duración del Resultado</label>
@@ -758,6 +762,6 @@
   <input type="file" id="masterPhotoFileInput" accept="image/*" style="display: none;">
 
   <!-- Script del Administrador Total -->
-  <script src="js/admin-testimonials.js?v=18"></script>
+  <script src="js/admin-testimonials.js?v=24"></script>
 </body>
 </html>
