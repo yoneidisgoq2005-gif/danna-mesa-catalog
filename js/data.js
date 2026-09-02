@@ -81,6 +81,29 @@ const DEFAULT_CATALOG_DATA = {
     cejasDividerQuote: "Un diseño pensado para tu rostro.",
     hydralipsDividerTitle: "HydraLips",
     hydralipsDividerQuote: "Tus labios en su mejor versión.",
+    cuidadosDividerTitle: "Cuidado en Casa",
+    cuidadosDividerQuote: "La belleza se extiende en tu rutina diaria.",
+    saludOcular: {
+      title: "Garantía & Salud Ocular",
+      subtitle: "Técnicas avanzadas y bioseguridad grado estudio diseñadas para proteger la salud de tus pestañas naturales.",
+      p1Title: "Adhesivos Certificados",
+      p1Desc: "Fórmulas prémium que minimizan la emisión de vapores, sin ardor y con registro INVIMA.",
+      p2Title: "Aislamiento Técnico 1 a 1",
+      p2Desc: "Cada extensión se adhiere a una única pestaña natural, respetando su ciclo de crecimiento. Cero peso excesivo y cero daño folicular.",
+      p3Title: "Bioseguridad & Esterilización",
+      p3Desc: "Esterilización rigurosa de instrumental, insumos descartables de un solo uso y atención individualizada en ambiente privado."
+    },
+    faq: {
+      title: "Preguntas Frecuentes",
+      subtitle: "Resolvemos tus dudas para que disfrutes de tu cita con total confianza.",
+      items: [
+        { q: "¿Dolerá el procedimiento de pestañas o lifting?", a: "En lo absoluto. La técnica es completamente indolora, delicada y relajante. La mayoría de nuestras clientas disfrutan tanto la experiencia que aprovechan para descansar o dormir." },
+        { q: "¿Se pueden caer o dañar mis pestañas naturales?", a: "No. Trabajamos con aislamiento meticuloso 1 a 1 y seleccionamos el calibre y longitud según la resistencia natural de tu pestaña." },
+        { q: "¿Cómo debo prepararme para el día de mi cita?", a: "Asiste con la zona de los ojos completamente limpia, sin residuos de pestañina ni cremas oleosas para garantizar máxima adherencia." },
+        { q: "¿Qué medios de pago están disponibles?", a: "Aceptamos transferencias directas por Bancolombia, Nequi, Daviplata y Efectivo el día de tu cita." }
+      ]
+    },
+    disabledPages: [],
     backCoverTitle: "Danna Mesa Studio",
     backCoverQuote: "Tu mirada, nuestro sello.",
     backCoverCta: "Agenda tu experiencia exclusiva por WhatsApp"
@@ -166,7 +189,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 70000,
       retouchAvailable: true,
-      retouch15_17: 50000,
+      retouch15_21: 50000,
       image: "assets/img/page_img_5.jpeg",
       imagePosition: "center center",
       tags: ["Natural", "Sutil"]
@@ -183,7 +206,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 75000,
       retouchAvailable: true,
-      retouch15_17: 55000,
+      retouch15_21: 55000,
       image: "assets/img/page_img_6.jpeg",
       imagePosition: "center center",
       tags: ["Densidad", "Natural"]
@@ -202,7 +225,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 80000,
       retouchAvailable: true,
-      retouch15_17: 60000,
+      retouch15_21: 60000,
       image: "assets/img/page_img_7.jpeg",
       imagePosition: "center center",
       tags: ["Impacto", "Expresivo", "Tendencia"]
@@ -219,7 +242,7 @@ const DEFAULT_CATALOG_DATA = {
       appointmentTime: "90 - 120 min",
       price: 80000,
       retouchAvailable: true,
-      retouch15_17: 60000,
+      retouch15_21: 60000,
       image: "assets/img/page_img_8.jpeg",
       imagePosition: "center center",
       tags: ["Definición", "Expresivo"]
@@ -568,7 +591,7 @@ const DEFAULT_CATALOG_DATA = {
  */
 class CatalogState {
   constructor() {
-    this.storageKey = "danna_mesa_catalog_v2026_v15";
+    this.storageKey = "danna_mesa_catalog_v2026_v16";
     this.data = this.loadData();
     this.initCloudSync();
   }
@@ -629,15 +652,29 @@ class CatalogState {
           ? cloudSrv.gallery.filter(g => g && g.src && typeof g.src === "string" && !g.src.startsWith("__overflow__:"))
           : (defSrv.gallery || []);
 
-        const ret15 = cloudSrv.retouch15_17 !== undefined ? cloudSrv.retouch15_17 : (cloudSrv.retouch15_21 !== undefined ? cloudSrv.retouch15_21 : defSrv.retouch15_17);
-        const ret18 = cloudSrv.retouch18_21 !== undefined ? cloudSrv.retouch18_21 : defSrv.retouch18_21;
+        const singleRetouchIds = ["ext-clasicas-naturales", "ext-efecto-pestanina", "ext-efecto-humedo", "ext-efecto-aura"];
+        const isSingleRetouch = singleRetouchIds.includes(defSrv.id);
+
+        let ret15_17 = null;
+        let ret15_21 = null;
+        let ret18_21 = null;
+
+        if (isSingleRetouch) {
+          ret15_21 = cloudSrv.retouch15_21 !== undefined ? cloudSrv.retouch15_21 : (cloudSrv.retouch15_17 !== undefined ? cloudSrv.retouch15_17 : defSrv.retouch15_21);
+          ret15_17 = null;
+          ret18_21 = null;
+        } else {
+          ret15_17 = cloudSrv.retouch15_17 !== undefined ? cloudSrv.retouch15_17 : (cloudSrv.retouch15_21 !== undefined ? cloudSrv.retouch15_21 : defSrv.retouch15_17);
+          ret18_21 = cloudSrv.retouch18_21 !== undefined ? cloudSrv.retouch18_21 : defSrv.retouch18_21;
+          ret15_21 = null;
+        }
 
         return {
           ...defSrv,
           ...cloudSrv,
-          retouch15_17: ret15,
-          retouch15_21: ret15,
-          retouch18_21: ret18,
+          retouch15_17: ret15_17,
+          retouch15_21: ret15_21,
+          retouch18_21: ret18_21,
           image: img,
           beforeImage: beforeImg,
           afterImage: afterImg,
@@ -665,7 +702,19 @@ class CatalogState {
     }
 
     // 5. Lookbook, Políticas, Tema & Testimonios
-    if (cloudData.lookbook) merged.lookbook = { ...def.lookbook, ...cloudData.lookbook };
+    if (cloudData.lookbook) {
+      merged.lookbook = {
+        ...def.lookbook,
+        ...cloudData.lookbook,
+        saludOcular: { ...def.lookbook.saludOcular, ...(cloudData.lookbook.saludOcular || {}) },
+        faq: {
+          ...def.lookbook.faq,
+          ...(cloudData.lookbook.faq || {}),
+          items: (cloudData.lookbook.faq && Array.isArray(cloudData.lookbook.faq.items)) ? cloudData.lookbook.faq.items : def.lookbook.faq.items
+        },
+        disabledPages: Array.isArray(cloudData.lookbook.disabledPages) ? cloudData.lookbook.disabledPages : (def.lookbook.disabledPages || [])
+      };
+    }
     if (cloudData.retouchPolicies) merged.retouchPolicies = { ...def.retouchPolicies, ...cloudData.retouchPolicies };
     if (cloudData.theme) merged.theme = { ...def.theme, ...cloudData.theme };
     if (Array.isArray(cloudData.testimonials)) {

@@ -384,6 +384,30 @@
           </select>
         </div>
 
+        <!-- Gestor Rápido de Visibilidad & Inclusión de Páginas -->
+        <details class="admin-card-section" style="margin-bottom: 20px; cursor: pointer;" id="adminLbVisibilityAccordion">
+          <summary style="font-size: 14px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 0; display: flex; justify-content: space-between; align-items: center;">
+            <span>📑 Incluir / Excluir Páginas de la Revista (Gestor de Visibilidad)</span>
+            <span style="font-size: 11px; font-weight: 600; text-transform: none; color: var(--admin-text-muted);">Clic para desplegar lista de páginas</span>
+          </summary>
+          <div style="margin-top: 14px; cursor: default;">
+            <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 12px;">
+              Marca las páginas que deseas incluir en la revista y desmarca las que desees ocultar. La numeración editorial se recalcula automáticamente:
+            </p>
+            <div id="adminLbVisibilityChecklist" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-bottom: 14px;">
+              <!-- Inyectado dinámicamente -->
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button type="button" class="admin-btn admin-btn-secondary" id="btnAdminLbSelectAllPages" style="padding: 6px 12px; font-size: 12px;">
+                ✓ Mostrar Todas
+              </button>
+              <button type="button" class="admin-btn" id="btnSaveAdminLbVisibility" style="padding: 6px 14px; font-size: 12px;">
+                💾 Guardar Visibilidad de Páginas
+              </button>
+            </div>
+          </div>
+        </details>
+
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start;">
           <!-- Editor Dinámico de la Página Seleccionada -->
           <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -741,6 +765,7 @@
   <input type="file" id="masterPhotoFileInput" accept="image/*" style="display: none;">
 
   <!-- Script del Administrador Total -->
-  <script src="js/admin-testimonials.js?v=29"></script>
+  <script src="js/data.js?v=35"></script>
+  <script src="js/admin-testimonials.js?v=35"></script>
 </body>
 </html>

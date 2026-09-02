@@ -41,7 +41,13 @@ class CatalogApp {
     this.initFaqAccordion();
     this.updateCartUI();
 
-    // Escuchar cambios de datos (desde el Customizer)
+    // Auto-activar vista de revista si viene con hash o query param
+    const urlParams = new URLSearchParams(window.location.search);
+    if (window.location.hash === "#lookbook" || window.location.hash === "#revista" || urlParams.get("view") === "lookbook" || urlParams.get("admin_preview") === "true") {
+      this.switchView("lookbook");
+    }
+
+    // Escuchar cambios de datos (desde el Customizer o Firestore)
     window.addEventListener("catalogDataChanged", () => {
       this.renderHeaderAndHero();
       this.renderCategoryTabs();
@@ -308,6 +314,43 @@ class CatalogApp {
     }
     if (policyNote && policiesData.note) policyNote.textContent = `* ${policiesData.note}`;
 
+    // Garantía & Salud Ocular
+    const so = (data.lookbook && data.lookbook.saludOcular) ? data.lookbook.saludOcular : (typeof DEFAULT_CATALOG_DATA !== 'undefined' && DEFAULT_CATALOG_DATA.lookbook ? DEFAULT_CATALOG_DATA.lookbook.saludOcular : null);
+    const garantiaSection = document.getElementById("garantia");
+    if (garantiaSection && so) {
+      const soTitle = garantiaSection.querySelector(".section-main-title");
+      const soDesc = garantiaSection.querySelector(".section-desc-text");
+      const cards = garantiaSection.querySelectorAll(".trust-pillar-card");
+      if (soTitle && so.title) soTitle.textContent = so.title;
+      if (soDesc && so.subtitle) soDesc.textContent = so.subtitle;
+      if (cards && cards.length >= 3) {
+        if (so.p1Title && cards[0].querySelector(".trust-pillar-title")) cards[0].querySelector(".trust-pillar-title").textContent = so.p1Title;
+        if (so.p1Desc && cards[0].querySelector(".trust-pillar-desc")) cards[0].querySelector(".trust-pillar-desc").textContent = so.p1Desc;
+        if (so.p2Title && cards[1].querySelector(".trust-pillar-title")) cards[1].querySelector(".trust-pillar-title").textContent = so.p2Title;
+        if (so.p2Desc && cards[1].querySelector(".trust-pillar-desc")) cards[1].querySelector(".trust-pillar-desc").textContent = so.p2Desc;
+        if (so.p3Title && cards[2].querySelector(".trust-pillar-title")) cards[2].querySelector(".trust-pillar-title").textContent = so.p3Title;
+        if (so.p3Desc && cards[2].querySelector(".trust-pillar-desc")) cards[2].querySelector(".trust-pillar-desc").textContent = so.p3Desc;
+      }
+    }
+
+    // Preguntas Frecuentes (FAQ)
+    const faqData = (data.lookbook && data.lookbook.faq) ? data.lookbook.faq : (typeof DEFAULT_CATALOG_DATA !== 'undefined' && DEFAULT_CATALOG_DATA.lookbook ? DEFAULT_CATALOG_DATA.lookbook.faq : null);
+    const faqContainer = document.getElementById("faqAccordion");
+    if (faqContainer && faqData && Array.isArray(faqData.items)) {
+      faqContainer.innerHTML = faqData.items.map(item => `
+        <div class="faq-item">
+          <button class="faq-question-btn" type="button">
+            <span>${item.q}</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer-content">
+            <p>${item.a}</p>
+          </div>
+        </div>
+      `).join("");
+      this.initFaqAccordion();
+    }
+
     // Footer
     const footerBrand = document.getElementById("footerBrandName");
     const footerLocation = document.getElementById("footerLocationText");
@@ -459,16 +502,32 @@ class CatalogApp {
       // Desglose de retoques si aplica
       let retouchHtml = "";
       if (service.retouchAvailable) {
-        const ret1 = service.retouch15_17 || service.retouch15_21;
-        const hasDual = Boolean(service.retouch18_21);
-        const ret1Label = hasDual ? "Retoque (15 a 17 días)" : "Retoque (15 a 21 días)";
-        retouchHtml = `
-          <div class="retouch-box">
-            <div class="retouch-title">✨ Tarifas de Retoque</div>
-            ${ret1 ? `<div class="retouch-row"><span>${ret1Label}</span><b>${this.state.formatMoney(ret1)}</b></div>` : ''}
-            ${(hasDual && service.retouch18_21) ? `<div class="retouch-row"><span>Retoque (18 a 21 días)</span><b>${this.state.formatMoney(service.retouch18_21)}</b></div>` : ''}
-          </div>
-        `;
+        const singleRetouchIds = ["ext-clasicas-naturales", "ext-efecto-pestanina", "ext-efecto-humedo", "ext-efecto-aura"];
+        const isSingle = singleRetouchIds.includes(service.id);
+
+        if (isSingle) {
+          const retPrice = service.retouch15_21 || service.retouch15_17;
+          if (retPrice) {
+            retouchHtml = `
+              <div class="retouch-box">
+                <div class="retouch-title">✨ Tarifas de Retoque</div>
+                <div class="retouch-row"><span>Retoque (15 a 21 días)</span><b>${this.state.formatMoney(retPrice)}</b></div>
+              </div>
+            `;
+          }
+        } else {
+          const ret17 = service.retouch15_17 || service.retouch15_21;
+          const ret21 = service.retouch18_21;
+          if (ret17 || ret21) {
+            retouchHtml = `
+              <div class="retouch-box">
+                <div class="retouch-title">✨ Tarifas de Retoque</div>
+                ${ret17 ? `<div class="retouch-row"><span>Retoque (15 a 17 días)</span><b>${this.state.formatMoney(ret17)}</b></div>` : ''}
+                ${ret21 ? `<div class="retouch-row"><span>Retoque (18 a 21 días)</span><b>${this.state.formatMoney(ret21)}</b></div>` : ''}
+              </div>
+            `;
+          }
+        }
       }
 
       // Slider Antes/Después si tiene ambas fotos (Lifting, HydraLips)

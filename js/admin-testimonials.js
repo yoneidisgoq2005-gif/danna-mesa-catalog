@@ -382,6 +382,16 @@
       if (this.btnReloadLookbookPreview) {
         this.btnReloadLookbookPreview.addEventListener("click", () => this.reloadLookbookIframe());
       }
+      const btnSaveVis = document.getElementById("btnSaveAdminLbVisibility");
+      if (btnSaveVis) {
+        btnSaveVis.addEventListener("click", () => this.handleSaveAdminLbVisibility());
+      }
+      const btnSelectAll = document.getElementById("btnAdminLbSelectAllPages");
+      if (btnSelectAll) {
+        btnSelectAll.addEventListener("click", () => {
+          document.querySelectorAll(".admin-lb-visibility-check").forEach(cb => cb.checked = true);
+        });
+      }
 
       // Cloud Sync & Backups Buttons
       if (this.btnPushAllToCloud) {
@@ -1207,9 +1217,16 @@
             srv.customPriceLabel = effectiveCustomPriceLabel;
             srv.duration = duration;
             srv.appointmentTime = appointmentTime;
-            srv.retouch15_17 = retouch15_17;
-            srv.retouch15_21 = retouch15_17;
-            srv.retouch18_21 = retouch18_21;
+            const isSingle = ["ext-clasicas-naturales", "ext-efecto-pestanina", "ext-efecto-humedo", "ext-efecto-aura"].includes(srv.id);
+            if (isSingle) {
+              srv.retouch15_21 = retouch15_17;
+              srv.retouch15_17 = null;
+              srv.retouch18_21 = null;
+            } else {
+              srv.retouch15_17 = retouch15_17;
+              srv.retouch18_21 = retouch18_21;
+              srv.retouch15_21 = null;
+            }
             srv.badge = badge;
             srv.desc = desc;
             srv.tags = tags;
@@ -1392,17 +1409,19 @@
     // ================= LOOKBOOK STUDIO PAGE EDITOR =================
     getLookbookPagesList() {
       const data = this.state.data;
+      const disabled = (data.lookbook && Array.isArray(data.lookbook.disabledPages)) ? data.lookbook.disabledPages : [];
+
       const pages = [
-        { key: "p1_cover", pageNum: 1, label: "Portada Principal (Hero)", type: "cover" },
-        { key: "p2_welcome", pageNum: 2, label: "Bienvenida Editorial", type: "welcome" },
-        { key: "p3_studio", pageNum: 3, label: "Studio Experience", type: "studio" },
-        { key: "p4_lifting_divider", pageNum: 4, label: "Separador Lifting", type: "divider", divKey: "lifting" },
-        { key: "p5_lifting_service", pageNum: 5, label: "Lifting de Pestañas Coreano", type: "service", serviceId: "lifting-coreano" },
-        { key: "p6_lifting_evidence", pageNum: 6, label: "Galería Resultados Lifting (3 Clientas)", type: "evidence", serviceId: "lifting-coreano" },
-        { key: "p7_ext_divider", pageNum: 7, label: "Separador Extensiones", type: "divider", divKey: "extensions" }
+        { key: "p1_cover", label: "Portada Principal (Hero)", type: "cover" },
+        { key: "p2_welcome", label: "Bienvenida Editorial", type: "welcome" },
+        { key: "p3_studio", label: "Studio Experience", type: "studio" },
+        { key: "p_salud_ocular", label: "Garantía & Salud Ocular", type: "salud_ocular" },
+        { key: "p4_lifting_divider", label: "Separador Lifting", type: "divider", divKey: "lifting" },
+        { key: "p5_lifting_service", label: "Lifting de Pestañas Coreano", type: "service", serviceId: "lifting-coreano" },
+        { key: "p6_lifting_evidence", label: "Galería Resultados Lifting (3 Clientas)", type: "evidence", serviceId: "lifting-coreano" },
+        { key: "p7_ext_divider", label: "Separador Extensiones", type: "divider", divKey: "extensions" }
       ];
 
-      let pNum = 8;
       const extServices = (data.services || []).filter(s => s.categoryId === "extensiones");
       for (let i = 0; i < extServices.length; i += 2) {
         const s1 = extServices[i];
@@ -1410,7 +1429,6 @@
         if (s1 && s2) {
           pages.push({
             key: `p_ext_${s1.id}_${s2.id}`,
-            pageNum: pNum,
             label: `${s1.name} & ${s2.name} (2 Efectos)`,
             type: "two_services",
             s1: s1.id,
@@ -1419,20 +1437,15 @@
         } else if (s1) {
           pages.push({
             key: `p_ext_${s1.id}`,
-            pageNum: pNum,
             label: `${s1.name} (1 Efecto)`,
             type: "service",
             serviceId: s1.id
           });
         }
-        pNum++;
       }
 
-      pages.push({ key: "p14_policies", pageNum: pNum, label: "Políticas de Retoque", type: "policies" });
-      pNum++;
-
-      pages.push({ key: "p15_cejas_divider", pageNum: pNum, label: "Separador Cejas", type: "divider", divKey: "cejas" });
-      pNum++;
+      pages.push({ key: "p14_policies", label: "Políticas de Retoque", type: "policies" });
+      pages.push({ key: "p15_cejas_divider", label: "Separador Cejas", type: "divider", divKey: "cejas" });
 
       const browServices = (data.services || []).filter(s => s.categoryId === "cejas");
       for (let i = 0; i < browServices.length; i += 2) {
@@ -1441,7 +1454,6 @@
         if (s1 && s2) {
           pages.push({
             key: `p_cejas_${s1.id}_${s2.id}`,
-            pageNum: pNum,
             label: `${s1.name} & ${s2.name} (2 Efectos)`,
             type: "two_services",
             s1: s1.id,
@@ -1450,54 +1462,109 @@
         } else if (s1) {
           pages.push({
             key: `p_cejas_${s1.id}`,
-            pageNum: pNum,
             label: `${s1.name} (1 Efecto)`,
             type: "service",
             serviceId: s1.id
           });
         }
-        pNum++;
       }
 
-      pages.push({ key: "p17_lips_divider", pageNum: pNum, label: "Separador HydraLips", type: "divider", divKey: "hydralips" });
-      pNum++;
+      pages.push({ key: "p17_lips_divider", label: "Separador HydraLips", type: "divider", divKey: "hydralips" });
 
-      const hydra = (data.services || []).find(s => s.categoryId === "hydralips");
+      const hydra = (data.services || []).find(s => s.id === "hydralips-sesion" || s.categoryId === "hydralips");
       pages.push({
         key: "p18_hydralips_service",
-        pageNum: pNum,
         label: "HydraLips Hidratación Labial",
         type: "service",
         serviceId: hydra ? hydra.id : "hydralips-sesion"
       });
-      pNum++;
 
-      pages.push({ key: "p19_combos", pageNum: pNum, label: "Experiencias & Rituales (Combos)", type: "combos" });
-      pNum++;
+      pages.push({ key: "p19_combos", label: "Experiencias & Combos", type: "combos" });
+      pages.push({ key: "p_cuidados_hidratante", label: "Cuidado en Casa & Hidratante Profesional", type: "cuidados", serviceId: "cuidado-hidratante" });
+      pages.push({ key: "p_faq", label: "Preguntas Frecuentes (FAQ)", type: "faq" });
+      pages.push({ key: "p20_backcover", label: "Contraportada & Contacto", type: "backcover" });
 
-      pages.push({ key: "p20_backcover", pageNum: pNum, label: "Contraportada & Contacto", type: "backcover" });
-
-      return pages;
+      let activeNum = 1;
+      return pages.map(p => {
+        const isEnabled = !disabled.includes(p.key);
+        const num = isEnabled ? (activeNum++) : null;
+        const numStr = num !== null ? (num < 10 ? `0${num}` : `${num}`) : "--";
+        return {
+          ...p,
+          pageNum: num,
+          isEnabled,
+          displayLabel: `Pág. ${numStr} — ${p.label}${isEnabled ? '' : ' (🚫 Oculta)'}`
+        };
+      });
     }
 
     populateLookbookPageSelector() {
       const selector = document.getElementById("adminLbPageSelector");
-      if (!selector) return;
+      const checklistContainer = document.getElementById("adminLbVisibilityChecklist");
 
       const pages = this.getLookbookPagesList();
-      const currentVal = selector.value || (pages[0] ? pages[0].key : "");
+      const currentVal = selector ? (selector.value || (pages[0] ? pages[0].key : "")) : "";
 
-      selector.innerHTML = pages.map(p => `
-        <option value="${p.key}">Página ${p.pageNum < 10 ? '0' + p.pageNum : p.pageNum} — ${p.label}</option>
-      `).join("");
+      if (selector) {
+        selector.innerHTML = pages.map(p => `
+          <option value="${p.key}">${p.displayLabel}</option>
+        `).join("");
 
-      if (pages.some(p => p.key === currentVal)) {
-        selector.value = currentVal;
-      } else if (pages[0]) {
-        selector.value = pages[0].key;
+        if (pages.some(p => p.key === currentVal)) {
+          selector.value = currentVal;
+        } else if (pages[0]) {
+          selector.value = pages[0].key;
+        }
+
+        this.renderAdminLbPageEditor(selector.value);
       }
 
-      this.renderAdminLbPageEditor(selector.value);
+      if (checklistContainer) {
+        checklistContainer.innerHTML = pages.map(p => `
+          <label style="display: flex; align-items: center; gap: 10px; background: var(--admin-surface-card); border: 1px solid var(--admin-border); padding: 8px 12px; border-radius: var(--admin-radius); cursor: pointer; transition: background 0.15s ease;">
+            <input type="checkbox" class="admin-lb-visibility-check" data-page-key="${p.key}" ${p.isEnabled ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: var(--admin-primary); cursor: pointer;">
+            <div style="flex: 1; min-width: 0;">
+              <span style="font-size: 12px; font-weight: 600; color: ${p.isEnabled ? 'var(--admin-text-main)' : 'var(--admin-text-muted)'}; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${p.displayLabel}
+              </span>
+            </div>
+          </label>
+        `).join("");
+      }
+    }
+
+    async handleSaveAdminLbVisibility() {
+      const btn = document.getElementById("btnSaveAdminLbVisibility");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Guardando...";
+      }
+
+      try {
+        const checkboxes = document.querySelectorAll(".admin-lb-visibility-check");
+        const disabledPages = [];
+        checkboxes.forEach(cb => {
+          if (!cb.checked) {
+            const key = cb.getAttribute("data-page-key");
+            if (key) disabledPages.push(key);
+          }
+        });
+
+        if (!this.state.data.lookbook) this.state.data.lookbook = {};
+        this.state.data.lookbook.disabledPages = disabledPages;
+
+        await this.state.saveToCloud(this.state.data);
+        this.populateLookbookPageSelector();
+        this.reloadLookbookIframe();
+        this.showToast("✓ Visibilidad de páginas guardada exitosamente", "success");
+      } catch (err) {
+        alert("Error al guardar visibilidad: " + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "💾 Guardar Visibilidad de Páginas";
+        }
+      }
     }
 
     renderAdminLbPageEditor(pageKey) {
@@ -1507,7 +1574,26 @@
       this.adminLbBase64Uploads = {};
       const data = this.state.data;
       const lb = data.lookbook || {};
+      const pages = this.getLookbookPagesList();
+      const pEntry = pages.find(p => p.key === pageKey) || { label: pageKey, isEnabled: true };
+      const isPageActive = pEntry.isEnabled;
+
       let html = "";
+
+      const visibilityToggleHtml = `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--admin-surface-input); padding: 12px 16px; border-radius: var(--admin-radius); border: 1px solid var(--admin-border); margin-bottom: 16px;">
+          <div>
+            <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--admin-primary); display: block;">Estado en la Revista</span>
+            <span style="font-size: 11px; font-weight: 700; color: ${isPageActive ? '#2e7d32' : '#d32f2f'};">
+              ${isPageActive ? '✅ Página Visible / Activa' : '🚫 Página Oculta / Desactivada'}
+            </span>
+          </div>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; font-weight: 600;">
+            <input type="checkbox" id="admin_page_visibility_toggle" ${isPageActive ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: var(--admin-primary);">
+            <span>Mostrar en Revista</span>
+          </label>
+        </div>
+      `;
 
       // 1. PORTADA
       if (pageKey === "p1_cover") {
@@ -1515,7 +1601,8 @@
         const { posX, posY } = this.parsePosition((data.hero && data.hero.imagePosition) ? data.hero.imagePosition : "center 20%");
 
         html = `
-          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🌟 Página 01 · Portada Principal (Hero)</h3>
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🌟 Portada Principal (Hero)</h3>
+          ${visibilityToggleHtml}
           
           <div style="display: flex; gap: 16px; align-items: center; background: var(--admin-surface-input); padding: 14px; border-radius: var(--admin-radius); border: 1px solid var(--admin-border); margin-bottom: 14px;">
             <div style="width: 110px; height: 110px; border-radius: 8px; overflow: hidden; background: #000; flex-shrink: 0;">
@@ -1558,7 +1645,8 @@
       // 2. BIENVENIDA
       else if (pageKey === "p2_welcome") {
         html = `
-          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📜 Página 02 · Bienvenida Editorial</h3>
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📜 Bienvenida Editorial</h3>
+          ${visibilityToggleHtml}
           <div class="admin-form-group">
             <label class="admin-form-label">Kicker Superior</label>
             <input type="text" id="admin_lb_welcomeKicker" class="admin-form-input" value="${lb.welcomeKicker || '01 · Bienvenida'}">
@@ -1580,7 +1668,8 @@
       // 3. STUDIO EXPERIENCE
       else if (pageKey === "p3_studio") {
         html = `
-          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🏢 Página 03 · Studio Experience</h3>
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🏢 Studio Experience</h3>
+          ${visibilityToggleHtml}
           <div class="admin-form-group">
             <label class="admin-form-label">Título</label>
             <input type="text" id="admin_lb_studioTitle" class="admin-form-input" value="${lb.studioTitle || 'Studio Experience'}">
@@ -1592,6 +1681,57 @@
           <div class="admin-form-group">
             <label class="admin-form-label">Descripción de la Experiencia</label>
             <textarea id="admin_lb_studioDesc" class="admin-form-textarea" rows="3">${lb.studioDesc || 'Una experiencia creada para resaltar tu esencia natural con la más alta bioseguridad, técnicas avanzadas y atención 100% individualizada.'}</textarea>
+          </div>
+        `;
+      }
+      // [NUEVO] GARANTÍA & SALUD OCULAR
+      else if (pageKey === "p_salud_ocular") {
+        const so = lb.saludOcular || {
+          title: "Garantía & Salud Ocular",
+          subtitle: "Técnicas avanzadas y bioseguridad grado estudio diseñadas para proteger la salud de tus pestañas naturales.",
+          p1Title: "Adhesivos Certificados",
+          p1Desc: "Fórmulas prémium que minimizan la emisión de vapores, sin ardor y con registro INVIMA.",
+          p2Title: "Aislamiento Técnico 1 a 1",
+          p2Desc: "Cada extensión se adhiere a una única pestaña natural, respetando su ciclo de crecimiento. Cero peso excesivo y cero daño folicular.",
+          p3Title: "Bioseguridad & Esterilización",
+          p3Desc: "Esterilización rigurosa de instrumental, insumos descartables de un solo uso y atención individualizada en ambiente privado."
+        };
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🛡️ Garantía & Salud Ocular (Bioseguridad Grado Estudio)</h3>
+          ${visibilityToggleHtml}
+          
+          <div class="admin-form-group">
+            <label class="admin-form-label">Título Principal</label>
+            <input type="text" id="admin_lb_soTitle" class="admin-form-input" value="${so.title}">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Subtítulo General</label>
+            <textarea id="admin_lb_soSubtitle" class="admin-form-textarea" rows="2">${so.subtitle}</textarea>
+          </div>
+
+          <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase;">🌿 Pilar 1: Adhesivos Certificados</span>
+            <div style="margin: 8px 0;">
+              <input type="text" id="admin_lb_soP1Title" class="admin-form-input" value="${so.p1Title}" placeholder="Título del Pilar 1">
+            </div>
+            <textarea id="admin_lb_soP1Desc" class="admin-form-textarea" rows="2" placeholder="Descripción del Pilar 1">${so.p1Desc}</textarea>
+          </div>
+
+          <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase;">🔬 Pilar 2: Aislamiento Técnico 1 a 1</span>
+            <div style="margin: 8px 0;">
+              <input type="text" id="admin_lb_soP2Title" class="admin-form-input" value="${so.p2Title}" placeholder="Título del Pilar 2">
+            </div>
+            <textarea id="admin_lb_soP2Desc" class="admin-form-textarea" rows="2" placeholder="Descripción del Pilar 2">${so.p2Desc}</textarea>
+          </div>
+
+          <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase;">🧼 Pilar 3: Bioseguridad & Esterilización</span>
+            <div style="margin: 8px 0;">
+              <input type="text" id="admin_lb_soP3Title" class="admin-form-input" value="${so.p3Title}" placeholder="Título del Pilar 3">
+            </div>
+            <textarea id="admin_lb_soP3Desc" class="admin-form-textarea" rows="2" placeholder="Descripción del Pilar 3">${so.p3Desc}</textarea>
           </div>
         `;
       }
@@ -1607,6 +1747,7 @@
 
         html = `
           <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">✨ Separador de Colección (${defTitle})</h3>
+          ${visibilityToggleHtml}
           <div class="admin-form-group">
             <label class="admin-form-label">Título del Separador</label>
             <input type="text" id="admin_lb_dividerTitle" class="admin-form-input" value="${defTitle}">
@@ -1623,7 +1764,8 @@
         const gallery = (liftingService && liftingService.gallery) ? liftingService.gallery : [];
 
         html = `
-          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📸 Página 06 · Galería de Resultados Lifting (3 Clientas)</h3>
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📸 Galería de Resultados Lifting (3 Clientas)</h3>
+          ${visibilityToggleHtml}
           <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 14px;">Modifica las 3 fotos reales de clientas con sus títulos, subtítulos y encuadres:</p>
           
           <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -1657,12 +1799,12 @@
                     </div>
                   </div>
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div>
-                      <label class="admin-form-label" style="font-size: 10px;">Título</label>
+                    <div class="admin-form-group">
+                      <label class="admin-form-label">Título</label>
                       <input type="text" id="admin_lift_g_title_${idx}" class="admin-form-input" value="${g.title || `Resultado 0${idx+1}`}">
                     </div>
-                    <div>
-                      <label class="admin-form-label" style="font-size: 10px;">Subtítulo / Efecto</label>
+                    <div class="admin-form-group">
+                      <label class="admin-form-label">Subtítulo</label>
                       <input type="text" id="admin_lift_g_sub_${idx}" class="admin-form-input" value="${g.subtitle || ''}">
                     </div>
                   </div>
@@ -1672,17 +1814,17 @@
           </div>
         `;
       }
-      // 6. COMBOS & EXPERIENCIAS (PÁGINA 20)
+      // 6. COMBOS & EXPERIENCIAS
       else if (pageKey === "p19_combos") {
         const comboBanner = data.comboBanner || {};
-        const expServices = data.services.filter(s => s.categoryId === "experiencias");
+        const expServices = (data.services || []).filter(s => s.categoryId === "experiencias");
 
         html = `
-          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">⭐ Experiencias & Rituales (Combos)</h3>
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">⭐ Experiencias Exclusivas & Combos</h3>
+          ${visibilityToggleHtml}
           
-          <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px; margin-bottom: 16px;">
-            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--admin-primary); display: block; margin-bottom: 8px;">Banner Principal de la Página</span>
-            <div class="admin-form-group" style="margin-bottom: 10px;">
+          <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px; margin-bottom: 14px;">
+            <div class="admin-form-group">
               <label class="admin-form-label">Título del Banner</label>
               <input type="text" id="admin_combo_bannerTitle" class="admin-form-input" value="${comboBanner.title || 'Experiencias & Rituales'}">
             </div>
@@ -1692,36 +1834,142 @@
             </div>
           </div>
 
-          <div style="font-size: 13px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase; margin-bottom: 10px;">✨ Combos Incluidos en la Página:</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase; margin-bottom: 8px;">Combos Incluidos:</div>
           <div style="display: flex; flex-direction: column; gap: 14px;">
             ${expServices.map((exp, idx) => `
-              <div style="background: var(--admin-surface-card); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 14px;">
-                <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--admin-text-main); display: block; margin-bottom: 8px;">Combo 0${idx + 1}: ${exp.name}</span>
+              <div style="background: var(--admin-surface-card); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 12px;">
+                <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--admin-text-main); display: block; margin-bottom: 6px;">Combo 0${idx + 1}: ${exp.name}</span>
                 <input type="hidden" id="admin_exp_id_${idx}" value="${exp.id}">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px;">
                   <div>
                     <label class="admin-form-label" style="font-size: 10px;">Nombre</label>
                     <input type="text" id="admin_exp_name_${idx}" class="admin-form-input" value="${exp.name}">
                   </div>
                   <div>
-                    <label class="admin-form-label" style="font-size: 10px;">Subtítulo / Beneficio</label>
+                    <label class="admin-form-label" style="font-size: 10px;">Subtítulo</label>
                     <input type="text" id="admin_exp_sub_${idx}" class="admin-form-input" value="${exp.subtitle || ''}">
                   </div>
                 </div>
-                <div class="admin-form-group" style="margin-bottom: 8px;">
+                <div class="admin-form-group" style="margin-bottom: 6px;">
                   <label class="admin-form-label" style="font-size: 10px;">Descripción</label>
                   <textarea id="admin_exp_desc_${idx}" class="admin-form-textarea" rows="2">${exp.desc || ''}</textarea>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                   <div>
                     <label class="admin-form-label" style="font-size: 10px;">Precio Fijo (COP)</label>
-                    <input type="number" id="admin_exp_price_${idx}" class="admin-form-input" value="${exp.price || ''}" placeholder="Opcional">
+                    <input type="number" id="admin_exp_price_${idx}" class="admin-form-input" value="${exp.price || ''}" placeholder="Opcional" style="color: var(--admin-primary); font-weight: 700;">
                   </div>
                   <div>
-                    <label class="admin-form-label" style="font-size: 10px;">Tarifa Dinámica (Texto)</label>
-                    <input type="text" id="admin_exp_customLabel_${idx}" class="admin-form-input" value="${exp.customPriceLabel || ''}" placeholder="Ej: Según pestañas elegidas">
+                    <label class="admin-form-label" style="font-size: 10px;">Tarifa / Texto</label>
+                    <input type="text" id="admin_exp_customLabel_${idx}" class="admin-form-input" value="${exp.customPriceLabel || ''}" placeholder="ej: Según pestañas">
                   </div>
                 </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+      // [NUEVO] CUIDADO EN CASA & HIDRATANTE
+      else if (pageKey === "p_cuidados_hidratante") {
+        const hidraProd = data.services.find(s => s.id === "cuidado-hidratante") || data.services.find(s => s.categoryId === "cuidados") || {
+          name: "Hidratante de Pestañas y Cejas",
+          subtitle: "Cuidado profesional en casa",
+          desc: "Diseñado para acondicionar, nutrir y humectar pestañas y cejas. Su uso constante prolonga la retención de tus extensiones y estimula el crecimiento natural.",
+          instructions: "Aplica una pequeña cantidad sobre pestañas o cejas limpias, preferiblemente por la noche. Distribuye suavemente y deja actuar.",
+          price: 15000,
+          image: "assets/img/hidratante.jpeg",
+          imagePosition: "center center"
+        };
+        const { posX, posY } = this.parsePosition(hidraProd.imagePosition || "center center");
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">🧴 Cuidado en Casa & Hidratante de Pestañas y Cejas</h3>
+          ${visibilityToggleHtml}
+
+          <div style="display: flex; gap: 16px; align-items: center; background: var(--admin-surface-input); padding: 14px; border-radius: var(--admin-radius); border: 1px solid var(--admin-border); margin-bottom: 14px;">
+            <div style="width: 100px; height: 100px; border-radius: 8px; overflow: hidden; background: #000; flex-shrink: 0;">
+              <img id="admin_img_preview_hidra" src="${hidraProd.image || 'assets/img/hidratante.jpeg'}" style="width:100%; height:100%; object-fit:cover; object-position: ${posX}% ${posY}%;" alt="Hidratante">
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+              <label class="admin-btn admin-btn-secondary" style="align-self: flex-start; cursor: pointer; padding: 6px 12px; font-size: 12px;">
+                🔄 Cambiar Foto del Hidratante
+                <input type="file" accept="image/*" style="display: none;" onchange="window.adminApp.handleAdminLbPhotoUpload('hidra', event)">
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <span style="font-size: 11px; color: var(--admin-text-muted);">Horizontal (X): <b id="admin_val_x_hidra">${posX}%</b></span>
+                  <input type="range" id="admin_slider_x_hidra" min="0" max="100" value="${posX}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('hidra')">
+                </div>
+                <div>
+                  <span style="font-size: 11px; color: var(--admin-text-muted);">Vertical (Y): <b id="admin_val_y_hidra">${posY}%</b></span>
+                  <input type="range" id="admin_slider_y_hidra" min="0" max="100" value="${posY}" style="width: 100%; accent-color: var(--admin-primary);" oninput="window.adminApp.handleAdminLbSliderChange('hidra')">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="admin-form-group">
+              <label class="admin-form-label">Nombre del Producto</label>
+              <input type="text" id="admin_lb_hidraName" class="admin-form-input" value="${hidraProd.name}">
+            </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Subtítulo</label>
+              <input type="text" id="admin_lb_hidraSub" class="admin-form-input" value="${hidraProd.subtitle || ''}">
+            </div>
+          </div>
+
+          <div class="admin-form-group">
+            <label class="admin-form-label">Descripción del Producto</label>
+            <textarea id="admin_lb_hidraDesc" class="admin-form-textarea" rows="3">${hidraProd.desc || ''}</textarea>
+          </div>
+
+          <div class="admin-form-group">
+            <label class="admin-form-label">Modo de Uso Sugerido</label>
+            <textarea id="admin_lb_hidraInst" class="admin-form-textarea" rows="2">${hidraProd.instructions || ''}</textarea>
+          </div>
+
+          <div class="admin-form-group">
+            <label class="admin-form-label">Precio de Venta (COP)</label>
+            <input type="number" id="admin_lb_hidraPrice" class="admin-form-input" value="${hidraProd.price || 15000}" style="font-weight: 700; color: var(--admin-primary);">
+          </div>
+        `;
+      }
+      // [NUEVO] PREGUNTAS FRECUENTES (FAQ)
+      else if (pageKey === "p_faq") {
+        const faqData = lb.faq || {
+          title: "Preguntas Frecuentes",
+          subtitle: "Resolvemos tus dudas para que disfrutes de tu cita con total confianza.",
+          items: [
+            { q: "¿Dolerá el procedimiento de pestañas o lifting?", a: "En lo absoluto. La técnica es completamente indolora, delicada y relajante. La mayoría de nuestras clientas aprovechan para descansar o dormir." },
+            { q: "¿Se pueden caer o dañar mis pestañas naturales?", a: "No. Trabajamos con aislamiento meticuloso 1 a 1 y seleccionamos el calibre y longitud según la resistencia natural de tu pestaña." },
+            { q: "¿Cómo debo prepararme para el día de mi cita?", a: "Asiste con la zona de los ojos completamente limpia, sin residuos de pestañina ni cremas oleosas para garantizar máxima adherencia." },
+            { q: "¿Qué medios de pago están disponibles?", a: "Aceptamos transferencias directas por Bancolombia, Nequi, Daviplata y Efectivo el día de tu cita." }
+          ]
+        };
+
+        html = `
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">❓ Preguntas Frecuentes (FAQ)</h3>
+          ${visibilityToggleHtml}
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="admin-form-group">
+              <label class="admin-form-label">Título de la Sección</label>
+              <input type="text" id="admin_lb_faqTitle" class="admin-form-input" value="${faqData.title}">
+            </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Subtítulo</label>
+              <input type="text" id="admin_lb_faqSubtitle" class="admin-form-input" value="${faqData.subtitle}">
+            </div>
+          </div>
+
+          <div style="font-size: 12px; font-weight: 700; color: var(--admin-primary); text-transform: uppercase; margin: 12px 0 8px;">Preguntas & Respuestas:</div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            ${faqData.items.map((item, idx) => `
+              <div style="background: var(--admin-surface-input); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); padding: 12px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--admin-primary); display: block; margin-bottom: 6px;">Pregunta 0${idx + 1}</span>
+                <input type="text" id="admin_faq_q_${idx}" class="admin-form-input" value="${item.q}" style="margin-bottom: 6px; font-weight: 600;">
+                <textarea id="admin_faq_a_${idx}" class="admin-form-textarea" rows="2">${item.a}</textarea>
               </div>
             `).join("")}
           </div>
@@ -1733,7 +1981,8 @@
         const condStr = Array.isArray(pol.conditions) ? pol.conditions.join("\n") : "";
 
         html = `
-          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📋 Página · Políticas de Retoque</h3>
+          <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">📋 Políticas de Retoque</h3>
+          ${visibilityToggleHtml}
           <div class="admin-form-group">
             <label class="admin-form-label">Título de la Sección</label>
             <input type="text" id="admin_lb_polTitle" class="admin-form-input" value="${pol.title || 'Políticas de retoque'}">
@@ -1756,6 +2005,7 @@
       else if (pageKey === "p20_backcover") {
         html = `
           <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 12px;">👑 Contraportada & Cierre Editorial</h3>
+          ${visibilityToggleHtml}
           <div class="admin-form-group">
             <label class="admin-form-label">Título de Marca</label>
             <input type="text" id="admin_lb_backTitle" class="admin-form-input" value="${lb.backCoverTitle || (data.studio ? data.studio.name : 'Danna Mesa Studio')}">
@@ -1806,6 +2056,7 @@
           <h3 style="font-size: 16px; color: var(--admin-primary); margin-bottom: 8px;">
             👁️ ${pEntry ? pEntry.label : targetServices.map(s => s.name).join(" & ")}
           </h3>
+          ${visibilityToggleHtml}
           <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 16px;">
             Esta página contiene <strong>${targetServices.length} efecto(s)</strong>. Edita fotos, encuadres, textos y tarifas:
           </p>
@@ -1935,6 +2186,19 @@
       }
 
       try {
+        // 0. VISIBILIDAD DE LA PÁGINA
+        const visToggle = document.getElementById("admin_page_visibility_toggle");
+        if (visToggle) {
+          if (!Array.isArray(data.lookbook.disabledPages)) data.lookbook.disabledPages = [];
+          if (visToggle.checked) {
+            data.lookbook.disabledPages = data.lookbook.disabledPages.filter(p => p !== pageKey);
+          } else {
+            if (!data.lookbook.disabledPages.includes(pageKey)) {
+              data.lookbook.disabledPages.push(pageKey);
+            }
+          }
+        }
+
         // 1. PORTADA
         if (pageKey === "p1_cover") {
           const cTitle = document.getElementById("admin_lb_coverTitle");
@@ -1979,6 +2243,27 @@
             if (data.studio) data.studio.slogan = sQuote.value.trim();
           }
           if (sDesc) data.lookbook.studioDesc = sDesc.value.trim();
+        }
+        // [NUEVO] GARANTÍA & SALUD OCULAR
+        else if (pageKey === "p_salud_ocular") {
+          const sTitle = document.getElementById("admin_lb_soTitle");
+          const sSub = document.getElementById("admin_lb_soSubtitle");
+          const p1T = document.getElementById("admin_lb_soP1Title");
+          const p1D = document.getElementById("admin_lb_soP1Desc");
+          const p2T = document.getElementById("admin_lb_soP2Title");
+          const p2D = document.getElementById("admin_lb_soP2Desc");
+          const p3T = document.getElementById("admin_lb_soP3Title");
+          const p3D = document.getElementById("admin_lb_soP3Desc");
+
+          if (!data.lookbook.saludOcular) data.lookbook.saludOcular = {};
+          if (sTitle) data.lookbook.saludOcular.title = sTitle.value.trim();
+          if (sSub) data.lookbook.saludOcular.subtitle = sSub.value.trim();
+          if (p1T) data.lookbook.saludOcular.p1Title = p1T.value.trim();
+          if (p1D) data.lookbook.saludOcular.p1Desc = p1D.value.trim();
+          if (p2T) data.lookbook.saludOcular.p2Title = p2T.value.trim();
+          if (p2D) data.lookbook.saludOcular.p2Desc = p2D.value.trim();
+          if (p3T) data.lookbook.saludOcular.p3Title = p3T.value.trim();
+          if (p3D) data.lookbook.saludOcular.p3Desc = p3D.value.trim();
         }
         // 4. DIVIDERS
         else if (pageKey.includes("divider")) {
@@ -2051,6 +2336,61 @@
             if (customLabelInput) exp.customPriceLabel = customLabelInput.value.trim();
           });
         }
+        // [NUEVO] CUIDADO EN CASA & HIDRATANTE
+        else if (pageKey === "p_cuidados_hidratante") {
+          let hidraProd = data.services.find(s => s.id === "cuidado-hidratante") || data.services.find(s => s.categoryId === "cuidados");
+          if (!hidraProd) {
+            hidraProd = {
+              id: "cuidado-hidratante",
+              categoryId: "cuidados",
+              name: "Hidratante de Pestañas y Cejas",
+              subtitle: "Cuidado profesional en casa",
+              desc: "Diseñado para acondicionar, nutrir y humectar pestañas y cejas. Su uso constante prolonga la retención de tus extensiones y estimula el crecimiento natural.",
+              instructions: "Aplica una pequeña cantidad sobre pestañas o cejas limpias, preferiblemente por la noche. Distribuye suavemente y deja actuar.",
+              price: 15000,
+              image: "assets/img/hidratante.jpeg",
+              imagePosition: "center center"
+            };
+            data.services.push(hidraProd);
+          }
+
+          const hName = document.getElementById("admin_lb_hidraName");
+          const hSub = document.getElementById("admin_lb_hidraSub");
+          const hDesc = document.getElementById("admin_lb_hidraDesc");
+          const hInst = document.getElementById("admin_lb_hidraInst");
+          const hPrice = document.getElementById("admin_lb_hidraPrice");
+          const sX = document.getElementById("admin_slider_x_hidra");
+          const sY = document.getElementById("admin_slider_y_hidra");
+
+          if (hName) hidraProd.name = hName.value.trim();
+          if (hSub) hidraProd.subtitle = hSub.value.trim();
+          if (hDesc) hidraProd.desc = hDesc.value.trim();
+          if (hInst) hidraProd.instructions = hInst.value.trim();
+          if (hPrice) hidraProd.price = hPrice.value.trim() === "" ? 15000 : parseInt(hPrice.value, 10);
+          if (this.adminLbBase64Uploads["hidra"]) hidraProd.image = this.adminLbBase64Uploads["hidra"];
+          if (sX && sY) hidraProd.imagePosition = `${sX.value}% ${sY.value}%`;
+        }
+        // [NUEVO] PREGUNTAS FRECUENTES (FAQ)
+        else if (pageKey === "p_faq") {
+          const fTitle = document.getElementById("admin_lb_faqTitle");
+          const fSub = document.getElementById("admin_lb_faqSubtitle");
+
+          if (!data.lookbook.faq) data.lookbook.faq = { items: [] };
+          if (fTitle) data.lookbook.faq.title = fTitle.value.trim();
+          if (fSub) data.lookbook.faq.subtitle = fSub.value.trim();
+
+          const items = [];
+          let idx = 0;
+          while (document.getElementById(`admin_faq_q_${idx}`)) {
+            const qEl = document.getElementById(`admin_faq_q_${idx}`);
+            const aEl = document.getElementById(`admin_faq_a_${idx}`);
+            if (qEl && aEl) {
+              items.push({ q: qEl.value.trim(), a: aEl.value.trim() });
+            }
+            idx++;
+          }
+          if (items.length > 0) data.lookbook.faq.items = items;
+        }
         // 7. POLÍTICAS
         else if (pageKey === "p14_policies") {
           const pTitle = document.getElementById("admin_lb_polTitle");
@@ -2085,6 +2425,7 @@
               const subInput = document.getElementById(`admin_srv_sub_${idx}`);
               const descInput = document.getElementById(`admin_srv_desc_${idx}`);
               const priceInput = document.getElementById(`admin_srv_price_${idx}`);
+              const durInput = document.getElementById(`admin_srv_dur_${idx}`);
               const ret15Input = document.getElementById(`admin_srv_ret15_${idx}`) || document.getElementById(`admin_srv_ret_${idx}`);
               const ret18Input = document.getElementById(`admin_srv_ret18_${idx}`);
               const sX = document.getElementById(`admin_slider_x_srv_${idx}`);
@@ -2095,13 +2436,24 @@
               if (descInput) s.desc = descInput.value.trim();
               if (priceInput) s.price = priceInput.value.trim() === "" ? null : parseInt(priceInput.value, 10);
               if (durInput) s.duration = durInput.value.trim();
+              const isSingle = ["ext-clasicas-naturales", "ext-efecto-pestanina", "ext-efecto-humedo", "ext-efecto-aura"].includes(s.id);
               if (ret15Input) {
                 const val = ret15Input.value.trim() === "" ? null : parseInt(ret15Input.value, 10);
-                s.retouch15_17 = val;
-                s.retouch15_21 = val;
+                if (isSingle) {
+                  s.retouch15_21 = val;
+                  s.retouch15_17 = null;
+                  s.retouch18_21 = null;
+                } else {
+                  s.retouch15_17 = val;
+                  s.retouch15_21 = null;
+                }
               }
               if (ret18Input) {
-                s.retouch18_21 = ret18Input.value.trim() === "" ? null : parseInt(ret18Input.value, 10);
+                if (!isSingle) {
+                  s.retouch18_21 = ret18Input.value.trim() === "" ? null : parseInt(ret18Input.value, 10);
+                } else {
+                  s.retouch18_21 = null;
+                }
               }
               if (sX && sY) s.imagePosition = `${sX.value}% ${sY.value}%`;
               if (this.adminLbBase64Uploads[`srv_${idx}`]) {
@@ -2113,6 +2465,7 @@
         }
 
         await this.state.saveToCloud(this.state.data);
+        this.populateLookbookPageSelector();
         this.reloadLookbookIframe();
         this.showToast("✓ ¡Página y todos sus elementos guardados en Firestore!", "success");
       } catch (err) {
