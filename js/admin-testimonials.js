@@ -329,7 +329,7 @@
         this.serviceDropzoneBox.addEventListener("click", () => this.serviceFileInput.click());
         this.serviceFileInput.addEventListener("change", (e) => {
           if (e.target.files && e.target.files[0]) {
-            this.compressImage(e.target.files[0], 800, 0.60, (base64) => {
+            this.compressImage(e.target.files[0], 1400, 0.85, (base64) => {
               this.currentServiceBase64 = base64;
               this.servicePreviewImg.src = base64;
               this.servicePreviewImg.style.display = "block";
@@ -898,8 +898,11 @@
 
       const file = e.target.files[0];
       const photo = this.targetPhotoChangeItem;
+      const isHero = photo.type === "hero" || photo.type === "comboBanner";
+      const maxDim = isHero ? 1600 : 1400;
+      const quality = isHero ? 0.88 : 0.85;
 
-      this.compressImage(file, 800, 0.60, async (compressedBase64) => {
+      this.compressImage(file, maxDim, quality, async (compressedBase64) => {
         if (photo.type === "hero") {
           this.state.data.hero.image = compressedBase64;
         } else if (photo.type === "comboBanner") {
@@ -2163,11 +2166,15 @@
       const file = event.target.files[0];
       if (!file) return;
 
-      this.compressImage(file, 800, 0.65, (compressedBase64) => {
+      const isCover = key.includes("cover");
+      const maxDim = isCover ? 1600 : 1400;
+      const quality = isCover ? 0.88 : 0.85;
+
+      this.compressImage(file, maxDim, quality, (compressedBase64) => {
         this.adminLbBase64Uploads[key] = compressedBase64;
         const img = document.getElementById(`admin_img_preview_${key}`);
         if (img) img.src = compressedBase64;
-        this.showToast("✓ Foto cargada en el editor", "success");
+        this.showToast("✓ Foto en alta resolución cargada en el editor", "success");
       });
     }
 
@@ -2601,26 +2608,31 @@
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
+          const targetDim = maxDim || 1400;
+          const targetQuality = quality || 0.85;
+
           const canvas = document.createElement("canvas");
           let width = img.width;
           let height = img.height;
 
-          if (width > maxDim || height > maxDim) {
+          if (width > targetDim || height > targetDim) {
             if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
+              height = Math.round((height * targetDim) / width);
+              width = targetDim;
             } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
+              width = Math.round((width * targetDim) / height);
+              height = targetDim;
             }
           }
 
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
 
-          const compressed = canvas.toDataURL("image/jpeg", quality || 0.65);
+          const compressed = canvas.toDataURL("image/jpeg", targetQuality);
           callback(compressed);
         };
         img.src = event.target.result;

@@ -1262,7 +1262,7 @@ class CatalogCustomizer {
     }
   }
 
-  compressImageFile(file, maxDimension = 800, quality = 0.65, callback) {
+  compressImageFile(file, maxDimension = 1400, quality = 0.85, callback) {
     if (!file || !file.type || !file.type.startsWith("image/")) {
       alert("Por favor selecciona un archivo de imagen válido.");
       return;
@@ -1273,8 +1273,8 @@ class CatalogCustomizer {
       img.onload = () => {
         let width = img.naturalWidth || img.width;
         let height = img.naturalHeight || img.height;
-        const maxDim = maxDimension || 800;
-        const q = quality || 0.65;
+        const maxDim = maxDimension || 1400;
+        const q = quality || 0.85;
 
         if (width > maxDim || height > maxDim) {
           if (width > height) {
@@ -1290,6 +1290,8 @@ class CatalogCustomizer {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, width, height);
 
         const dataUrl = canvas.toDataURL("image/jpeg", q);
